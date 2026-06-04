@@ -28,7 +28,7 @@ const Sidebar = () => {
     { path: '/assets', label: 'العهد والأصول', icon: Package, roles: ['admin', 'hr'] },
     { path: '/departments', label: 'الأقسام الإدارية', icon: Building2, roles: ['admin', 'hr'] },
     { path: '/reports', label: 'التقارير', icon: BarChart3, roles: ['admin', 'hr', 'employee'] },
-    { path: '/settings', label: 'إعدادات النظام', icon: Settings, roles: ['admin', 'hr'] },
+    { path: '/settings', label: 'الإعدادات', icon: Settings, roles: ['admin', 'hr', 'employee'] },
   ];
 
   const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));

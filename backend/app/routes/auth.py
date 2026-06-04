@@ -3,7 +3,9 @@
 
 import random
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+import os
+from app.config import settings
 from pydantic import BaseModel
 from app.database import users_col, employees_col, otp_col
 from app.auth import hash_password, verify_password, create_access_token, get_current_user, require_role
@@ -187,3 +189,105 @@ def get_me(current_user: dict = Depends(get_current_user)):
             current_user["contract_end_date"] = emp.get("contract_end_date")
     
     return UserResponse(**current_user)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class UpdateProfileRequest(BaseModel):
+    name: str
+    phone: str = None
+    email: str
+
+
+@router.post("/change-password")
+def change_password(
+    data: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Change the current user's password."""
+    user = users_col().find_one({"email": current_user["email"]})
+    if not user or not verify_password(data.current_password, user["password_hash"]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="كلمة المرور الحالية غير صحيحة"
+        )
+    
+    users_col().update_one(
+        {"email": current_user["email"]},
+        {"$set": {"password_hash": hash_password(data.new_password)}}
+    )
+    return {"message": "تم تغيير كلمة المرور بنجاح"}
+
+
+@router.put("/profile")
+def update_profile(
+    data: UpdateProfileRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update user's own profile info."""
+    if data.email != current_user["email"]:
+        existing = users_col().find_one({"email": data.email})
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="البريد الإلكتروني مستخدم بالفعل من قبل مستخدم آخر"
+            )
+
+    emp_id = current_user.get("employee_id")
+    if not emp_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="هذا الحساب غير مرتبط بملف موظف"
+        )
+
+    # Update in users collection
+    users_col().update_one(
+        {"email": current_user["email"]},
+        {"$set": {"email": data.email}}
+    )
+    
+    # Update in employees collection
+    employees_col().update_one(
+        {"employee_id": emp_id},
+        {"$set": {
+            "name": data.name,
+            "email": data.email,
+            "phone": data.phone
+        }}
+    )
+    
+    return {"message": "تم تحديث البيانات بنجاح"}
+
+
+@router.post("/profile-picture")
+async def upload_own_photo(
+    photo: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload own profile photo."""
+    emp_id = current_user.get("employee_id")
+    if not emp_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="هذا الحساب غير مرتبط بملف موظف"
+        )
+
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    ext = photo.filename.split(".")[-1] if "." in photo.filename else "jpg"
+    filename = f"{emp_id}_profile.{ext}"
+    filepath = os.path.join(settings.UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as f:
+        content = await photo.read()
+        f.write(content)
+
+    photo_url = f"/uploads/{filename}"
+    employees_col().update_one(
+        {"employee_id": emp_id},
+        {"$set": {"photo_url": photo_url}}
+    )
+
+    return {"photo_url": photo_url}
