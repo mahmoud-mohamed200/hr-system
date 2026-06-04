@@ -24,3 +24,4 @@ uploads/
 backend/.env
 .idea/
 .vscode/
+backend/static/

@@ -2,9 +2,10 @@
 """Main FastAPI application entry point."""
 
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.config import settings
 from app.database import get_client, get_db
@@ -57,12 +58,34 @@ app.include_router(loans.router)
 app.include_router(assets.router)
 app.include_router(payroll.router)
 
+# Serve frontend static assets explicitly if they exist
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+ASSETS_DIR = os.path.join(STATIC_DIR, "assets")
 
-@app.get("/")
-def read_root():
+if os.path.exists(ASSETS_DIR):
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="frontend_assets")
+
+# SPA Catch-all for React Router
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    # Do not intercept actual API endpoints (should be handled by routers)
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+        
+    # Check if a specific file is requested (like favicon.svg, vite.svg)
+    file_path = os.path.join(STATIC_DIR, full_path)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+        
+    # Fallback to index.html for React Router
+    index_file = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+        
     return {
         "status": "online",
         "system": "HR Attendance AI Backend",
         "version": "2.0.0",
-        "company": settings.COMPANY_NAME
+        "company": settings.COMPANY_NAME,
+        "note": "Frontend is not built or static files are missing."
     }
