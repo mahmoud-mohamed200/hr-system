@@ -19,9 +19,8 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Install system dependencies if required
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# (Removed build-essential to save disk space on Back4App free tier)
+RUN apt-get update && rm -rf /var/lib/apt/lists/*
 
 # Copy backend requirements and install
 COPY backend/requirements.txt .
