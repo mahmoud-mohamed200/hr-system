@@ -1,30 +1,4 @@
-#Core ML / DL
-numpy==1.26.4
-scipy==1.13.1
-pandas==2.3.1
-scikit-learn==1.6.1
-
-#PyTorch (CUDA handled separately)
-torch>=2.2.2
-torchvision>=0.17.2
-torchaudio>=2.2.2
-facenet-pytorch>=2.5.3
-
-#TensorFlow stack (for DeepFace)
-tensorflow>=2.19.0
-keras>=3.10.0
-tf-keras>=2.19.0
-tensorboard>=2.19.0
-
-#Face Recognition & Vision
-opencv-python>=4.8.1.78
-opencv-contrib-python>=4.11.0.86
-deepface>=0.0.95
-retina-face>=0.0.17
-mtcnn>=0.1.1
-pillow>=10.2.0
-
-#Web / API
+# Web / API Core (FastAPI web server & DB)
 fastapi>=0.124.4
 uvicorn>=0.38.0
 python-multipart>=0.0.20
@@ -33,7 +7,7 @@ passlib[bcrypt]>=1.7.4
 python-jose[cryptography]>=3.3.0
 email-validator>=2.1.0.post1
 
-#Utilities
+# Utilities
 requests>=2.32.4
 tqdm>=4.67.1
 psutil>=7.0.0
