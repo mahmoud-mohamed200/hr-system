@@ -1,6 +1,11 @@
 # app/auth.py
 """JWT authentication utilities — token creation, verification, and password hashing."""
 
+import bcrypt
+# Monkeypatch bcrypt for passlib compatibility
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = bcrypt
+
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt

@@ -1,6 +1,11 @@
 # app/main.py
 """Main FastAPI application entry point."""
 
+import bcrypt
+# Monkeypatch bcrypt for passlib compatibility
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = bcrypt
+
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
