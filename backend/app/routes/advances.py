@@ -67,8 +67,8 @@ def request_advance(
 def list_advances(
     current_user: dict = Depends(get_current_user),
 ):
-    """List advance requests. Employees see only their own; HR/CEO see all."""
-    if current_user["role"] in ["hr", "ceo"]:
+    """List advance requests. Employees see only their own; Admins/HR/CEO see all."""
+    if current_user["role"] in ["admin", "hr", "ceo"]:
         cursor = advances_col().find().sort("created_at", -1)
     else:
         cursor = advances_col().find({"employee_id": current_user["employee_id"]}).sort("created_at", -1)
@@ -80,9 +80,9 @@ def list_advances(
 def update_advance_status(
     advance_id: str,
     data: AdvanceUpdateStatus,
-    current_user: dict = Depends(require_role("hr")),
+    current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    """Approve or reject a salary advance. HR only."""
+    """Approve or reject a salary advance. Admin/HR only."""
     try:
         oid = ObjectId(advance_id)
     except Exception:

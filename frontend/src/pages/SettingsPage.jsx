@@ -202,7 +202,7 @@ const SettingsPage = () => {
     { key: 'sunday', label: 'الأحد' }
   ];
 
-  const hasSystemAccess = user?.role === 'admin' || user?.role === 'ceo';
+  const hasSystemAccess = ['admin', 'ceo', 'hr'].includes(user?.role);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', direction: 'rtl', textAlign: 'right' }}>

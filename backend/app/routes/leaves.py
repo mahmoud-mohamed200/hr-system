@@ -90,8 +90,8 @@ def request_leave(
 def list_leaves(
     current_user: dict = Depends(get_current_user),
 ):
-    """List leave requests. Employees see only their own; HR/CEO see all."""
-    if current_user["role"] in ["hr", "ceo"]:
+    """List leave requests. Employees see only their own; Admins/HR/CEO see all."""
+    if current_user["role"] in ["admin", "hr", "ceo"]:
         cursor = leaves_col().find().sort("created_at", -1)
     else:
         cursor = leaves_col().find({"employee_id": current_user["employee_id"]}).sort("created_at", -1)
@@ -193,9 +193,9 @@ def _adjust_attendance_for_leave(leave: dict):
 def update_leave_status(
     leave_id: str,
     data: LeaveUpdateStatus,
-    current_user: dict = Depends(require_role("hr")),
+    current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    """Approve or reject a leave request. HR only."""
+    """Approve or reject a leave request. Admin/HR only."""
     try:
         oid = ObjectId(leave_id)
     except Exception:

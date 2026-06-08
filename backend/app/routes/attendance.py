@@ -113,7 +113,7 @@ def list_attendance(
     query = {}
     if date:
         query["date"] = date
-    if current_user.get("role") not in ["hr", "ceo"]:
+    if current_user.get("role") not in ["admin", "hr", "ceo"]:
         query["employee_id"] = current_user.get("employee_id")
     else:
         if employee_id:
@@ -168,7 +168,7 @@ def get_employee_attendance(
 @router.post("/check-in")
 def manual_check_in(
     data: AttendanceCheckIn,
-    current_user: dict = Depends(require_role("hr")),
+    current_user: dict = Depends(require_role("admin", "hr")),
 ):
     """Manually check in an employee."""
     emp = employees_col().find_one({"employee_id": data.employee_id})
@@ -217,7 +217,7 @@ def manual_check_in(
 @router.post("/check-out")
 def manual_check_out(
     data: AttendanceCheckOut,
-    current_user: dict = Depends(require_role("hr")),
+    current_user: dict = Depends(require_role("admin", "hr")),
 ):
     """Manually check out an employee."""
     if data.employee_id == "EMP-7777":
@@ -460,7 +460,7 @@ def gps_check_out(
 
 
 @router.post("/sync-biometric")
-def sync_biometric(current_user: dict = Depends(require_role("hr"))):
+def sync_biometric(current_user: dict = Depends(require_role("admin", "hr"))):
     """Mock API simulating sync with fingerprint biometric devices daily."""
     today = _get_today_str()
     active_employees = list(employees_col().find({

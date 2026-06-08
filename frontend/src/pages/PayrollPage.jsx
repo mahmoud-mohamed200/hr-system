@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const PayrollPage = () => {
   const { user } = useAuth();
-  const isAdminOrCeo = ['admin', 'ceo'].includes(user?.role);
+  const isAdminOrCeo = ['admin', 'ceo', 'hr'].includes(user?.role);
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().split('T')[0].substring(0, 7)); // YYYY-MM
   const [payrollState, setPayrollState] = useState('draft'); // 'draft' or 'approved'

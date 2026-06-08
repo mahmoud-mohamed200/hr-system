@@ -22,8 +22,8 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     month_str = today[:7]  # YYYY-MM
     user_role = current_user.get("role")
 
-    # 1. CEO and HR dashboard (full attendance and organization overview)
-    if user_role in ["hr", "ceo"]:
+    # 1. CEO, Admin and HR dashboard (full attendance and organization overview)
+    if user_role in ["admin", "hr", "ceo"]:
         total_employees = employees_col().count_documents({
             "is_active": True,
             "employee_id": {"$ne": "EMP-7777"},
@@ -98,28 +98,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
             "recentEvents": recent_events
         }
 
-    # 2. Admin dashboard (assets and payroll system stats)
-    elif user_role == "admin":
-        from app.database import assets_col, payrolls_col
-        total_assets = assets_col().count_documents({})
-        assigned_assets = assets_col().count_documents({"status": "assigned"})
-        total_employees = employees_col().count_documents({"is_active": True})
-        
-        # Check current month payroll status
-        payroll_doc = payrolls_col().find_one({"month": month_str})
-        payroll_status = "approved" if payroll_doc and payroll_doc.get("status") == "approved" else "draft"
-
-        return {
-            "role": "admin",
-            "stats": {
-                "totalAssets": total_assets,
-                "assignedAssets": assigned_assets,
-                "totalEmployees": total_employees,
-                "payrollStatus": payroll_status
-            }
-        }
-
-    # 3. Employee dashboard (personal attendance, check-in log, leaves/loans updates)
+    # 2. Employee dashboard (personal attendance, check-in log, leaves/loans updates)
     else:
         emp_id = current_user.get("employee_id")
         
