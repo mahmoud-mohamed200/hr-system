@@ -16,16 +16,16 @@
   --warning-light: rgba(245, 158, 11, 0.15);
 
   /* Neutrals & Backgrounds */
-  --bg-dark: rgba(255, 255, 255, 0.05);
-  --bg-card: rgba(255, 255, 255, 0.1);
+  --bg-dark: rgba(255, 255, 255, 0.4);
+  --bg-card: rgba(255, 255, 255, 0.85);
   
   /* Typography Colors */
-  --text-main: rgba(255, 255, 255, 0.9);
-  --text-dim: rgba(255, 255, 255, 0.6);
+  --text-main: #0f172a; /* Black/Dark Slate */
+  --text-dim: #475569; /* Gray/Slate */
   
   /* Borders and Glass */
-  --glass: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass: rgba(255, 255, 255, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.6);
   
   /* Shadows */
   --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -315,7 +315,7 @@ input, select, textarea {
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.2s ease;
