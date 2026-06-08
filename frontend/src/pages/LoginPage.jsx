@@ -9,7 +9,6 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [step2fa, setStep2fa] = useState(false);
-  const [devOtp, setDevOtp] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -25,9 +24,6 @@ const LoginPage = () => {
       const res = await login(email, password);
       if (res && res.status === '2fa_required') {
         setStep2fa(true);
-        if (res.dev_otp) {
-          setDevOtp(res.dev_otp);
-        }
       } else {
         navigate('/');
       }
@@ -236,11 +232,7 @@ const LoginPage = () => {
               <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-dim)' }}>رمز التحقق الثنائي (OTP)</label>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>تم إرسال رمز تحقق مؤقت لحسابك. يرجى إدخاله للمتابعة.</p>
               
-              {devOtp && (
-                <div style={{ background: 'rgba(79, 70, 229, 0.06)', border: '1px dashed var(--primary)', color: 'var(--primary)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', textAlign: 'center', marginBottom: '0.5rem' }}>
-                  [بيئة التطوير]: رمز التحقق هو <strong>{devOtp}</strong>
-                </div>
-              )}
+              {/* The OTP code is securely logged to the backend terminal / sent via email simulation */}
               
               <div style={{ position: 'relative' }}>
                 <ShieldCheck size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />

@@ -81,13 +81,12 @@ def login(request: Request, credentials: UserLogin):
             "code": code,
             "created_at": datetime.now(timezone.utc)
         })
-        # Log to terminal for debugging and developer visibility
-        print(f"\n🔥 [2FA OTP CODE] for {credentials.email} is: {code}\n")
+        # Simulate sending email
+        print(f"\n📩 [EMAIL SIMULATION] Sending OTP to {credentials.email}...")
+        print(f"🔥 [2FA OTP CODE] Your login code is: {code}\n")
         return {
             "status": "2fa_required",
-            "email": credentials.email,
-            # Return code for easy testing in development/mock frontend
-            "dev_otp": code
+            "email": credentials.email
         }
 
     # Build standard user response with employee info
