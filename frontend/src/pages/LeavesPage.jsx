@@ -15,6 +15,7 @@ import {
 const LeavesPage = () => {
   const { user } = useAuth();
   const isAdminOrHr = ['admin', 'hr'].includes(user?.role);
+  const isCeo = user?.role === 'ceo';
 
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -111,25 +112,27 @@ const LeavesPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', direction: 'rtl' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Header title="الإجازات والأذونات والمأموريات" />
-        <button 
-          onClick={() => setModalOpen(true)}
-          style={{
-            background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-            color: '#ffffff',
-            border: 'none',
-            padding: '0.6rem 1.2rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontWeight: '700',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-          }}
-        >
-          <Plus size={16} />
-          <span>تقديم طلب جديد</span>
-        </button>
+        {!isCeo && (
+          <button 
+            onClick={() => setModalOpen(true)}
+            style={{
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+              color: '#ffffff',
+              border: 'none',
+              padding: '0.6rem 1.2rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontWeight: '700',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+            }}
+          >
+            <Plus size={16} />
+            <span>تقديم طلب جديد</span>
+          </button>
+        )}
       </div>
 
       {/* Info Alert about permission limits */}

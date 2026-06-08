@@ -35,6 +35,8 @@ def request_leave(
     current_user: dict = Depends(get_current_user),
 ):
     """Submit a new leave or permission request."""
+    if current_user.get("role") == "ceo" or current_user.get("employee_id") == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من طلبات الإجازات والأذونات")
     # Find employee profile
     emp = employees_col().find_one({"employee_id": current_user["employee_id"]})
     if not emp:

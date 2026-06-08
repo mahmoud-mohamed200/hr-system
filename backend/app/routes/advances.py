@@ -32,6 +32,8 @@ def request_advance(
     current_user: dict = Depends(get_current_user),
 ):
     """Request a salary advance."""
+    if current_user.get("role") == "ceo" or current_user.get("employee_id") == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من طلبات السلف")
     emp = employees_col().find_one({"employee_id": current_user["employee_id"]})
     if not emp:
         raise HTTPException(status_code=404, detail="لم يتم العثور على ملف تعريف الموظف")
