@@ -7,10 +7,20 @@ if not hasattr(bcrypt, "__about__"):
     bcrypt.__about__ = bcrypt
 
 import os
-from fastapi import FastAPI, HTTPException
+import logging
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
+# Setup structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.database import get_client, get_db
@@ -21,6 +31,14 @@ app = FastAPI(
     description="Backend API for the real-time HR Attendance AI System",
     version="2.0.0",
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error on {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected internal server error occurred. Please try again later."},
+    )
 
 # CORS middleware configuration
 app.add_middleware(
@@ -40,13 +58,13 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 def startup_db_client():
     # Trigger client and DB connection + index creation
     get_db()
-    print("🚀 Connected to MongoDB and ensured indexes.")
+    logger.info("🚀 Connected to MongoDB and ensured indexes.")
 
 
 @app.on_event("shutdown")
 def shutdown_db_client():
     get_client().close()
-    print("🛑 MongoDB connection closed.")
+    logger.info("🛑 MongoDB connection closed.")
 
 
 # Include routers

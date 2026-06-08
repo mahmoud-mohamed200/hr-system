@@ -95,6 +95,8 @@ def require_role(*roles: str):
     """FastAPI dependency factory — requires the user to have one of the given roles."""
 
     def role_checker(current_user: dict = Depends(get_current_user)):
+        if current_user["role"] == "ceo":
+            return current_user
         if current_user["role"] not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

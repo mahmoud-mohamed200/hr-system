@@ -204,6 +204,14 @@ def update_employee(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
+    # Protect CEO: Only the CEO themselves (role == "ceo") can modify the CEO's profile!
+    if employee_id == "EMP-7777" or emp.get("job_title") == "الرئيس التنفيذي" or emp.get("email") == "ceo@xqpharma.com":
+        if current_user.get("role") != "ceo":
+            raise HTTPException(
+                status_code=403,
+                detail="غير مسموح لغير الرئيس التنفيذي بتعديل بيانات هذا الحساب"
+            )
+
     update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
@@ -247,6 +255,13 @@ def delete_employee(
     emp = employees_col().find_one({"employee_id": employee_id})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
+
+    # Protect CEO: Block deletion of the CEO's profile completely!
+    if employee_id == "EMP-7777" or emp.get("job_title") == "الرئيس التنفيذي" or emp.get("email") == "ceo@xqpharma.com":
+        raise HTTPException(
+            status_code=403,
+            detail="غير مسموح بحذف حساب الرئيس التنفيذي نهائياً"
+        )
 
     # Safety lock on deletion: check active assets (Exit Clearance / مخالصة)
     from app.database import assets_col

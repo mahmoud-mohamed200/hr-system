@@ -34,6 +34,8 @@ const AppLayout = ({ children }) => {
   );
 };
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   useEffect(() => {
     document.body.dir = 'rtl';
@@ -41,6 +43,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <Toaster position="top-center" reverseOrder={false} />
       <Router>
         <Routes>
           {/* Public Routes */}

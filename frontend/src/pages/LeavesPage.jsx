@@ -124,7 +124,7 @@ const LeavesPage = () => {
             alignItems: 'center',
             gap: '0.5rem',
             fontWeight: '700',
-            boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
           }}
         >
           <Plus size={16} />
@@ -134,8 +134,8 @@ const LeavesPage = () => {
 
       {/* Info Alert about permission limits */}
       <div style={{ 
-        background: 'rgba(214, 58, 47, 0.04)', 
-        border: '1px solid rgba(0, 255, 213, 0.15)', 
+        background: 'rgba(79, 70, 229, 0.04)', 
+        border: '1px solid var(--glass-border)', 
         padding: '1rem', 
         borderRadius: '12px', 
         color: 'var(--primary)',
@@ -339,7 +339,7 @@ const LeavesPage = () => {
                   fontWeight: '700',
                   cursor: 'pointer',
                   marginTop: '0.5rem',
-                  boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
                 }}
               >
                 تقديم الطلب

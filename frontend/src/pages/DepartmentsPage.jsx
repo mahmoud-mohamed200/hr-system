@@ -105,7 +105,7 @@ const DepartmentsPage = () => {
             alignItems: 'center',
             gap: '0.5rem',
             fontWeight: '700',
-            boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
           }}
         >
           <Plus size={16} />
@@ -121,7 +121,7 @@ const DepartmentsPage = () => {
             <div key={dept.id} className="card" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(214, 58, 47, 0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', border: '1px solid rgba(214, 58, 47, 0.1)' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(79, 70, 229, 0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', border: '1px solid rgba(79, 70, 229, 0.1)' }}>
                     <Building2 size={20} />
                   </div>
                   <div>
@@ -239,7 +239,7 @@ const DepartmentsPage = () => {
                   fontWeight: '700',
                   cursor: 'pointer',
                   marginTop: '0.5rem',
-                  boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
                 }}
               >
                 {isEdit ? 'Save Changes' : 'Create Department'}

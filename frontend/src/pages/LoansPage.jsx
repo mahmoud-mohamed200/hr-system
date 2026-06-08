@@ -165,7 +165,7 @@ const LoansPage = () => {
               alignItems: 'center',
               gap: '0.5rem',
               fontWeight: '700',
-              boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
             }}
           >
             <DollarSign size={16} />
@@ -407,7 +407,7 @@ const LoansPage = () => {
                   style={{ minHeight: '80px', resize: 'vertical' }}
                 />
               </div>
-              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)' }}>
+              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
                 تقديم طلب السلفة
               </button>
             </form>
@@ -473,7 +473,7 @@ const LoansPage = () => {
                   style={{ minHeight: '80px', resize: 'vertical' }}
                 />
               </div>
-              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)' }}>
+              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
                 تقديم طلب القرض
               </button>
             </form>

@@ -208,7 +208,7 @@ const AttendancePage = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '0.4rem',
-              boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
             }}
           >
             <UserCheck size={16} />
@@ -538,7 +538,7 @@ const AttendancePage = () => {
                   fontWeight: '700',
                   cursor: 'pointer',
                   marginTop: '0.5rem',
-                  boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
                 }}
               >
                 تأكيد تسجيل ال{manualType === 'in' ? 'حضور' : 'انصراف'}

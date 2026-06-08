@@ -145,7 +145,7 @@ const AssetsPage = () => {
             alignItems: 'center',
             gap: '0.5rem',
             fontWeight: '700',
-            boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
           }}
         >
           <Plus size={16} />
@@ -308,7 +308,7 @@ const AssetsPage = () => {
                   className="modal-input" 
                 />
               </div>
-              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)' }}>
+              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
                 حفظ وإضافة الأصل
               </button>
             </form>
@@ -342,7 +342,7 @@ const AssetsPage = () => {
                   ))}
                 </select>
               </div>
-              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)' }}>
+              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
                 تأكيد وتسليم العهدة
               </button>
             </form>

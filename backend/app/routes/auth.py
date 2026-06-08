@@ -2,8 +2,9 @@
 """Authentication endpoints — login, register, get current user, and 2FA."""
 
 import random
+import time
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request
 import os
 from app.config import settings
 from pydantic import BaseModel
@@ -19,15 +20,47 @@ class TwoFactorVerify(BaseModel):
     otp: str
 
 
+# Simple in-memory rate limiter
+LOGIN_ATTEMPTS = {}
+MAX_ATTEMPTS = 5
+LOCKOUT_TIME = 60 * 5  # 5 minutes
+
 @router.post("/login")
-def login(credentials: UserLogin):
+def login(request: Request, credentials: UserLogin):
     """Authenticate user and return JWT token or request 2FA OTP."""
+    ip = request.client.host
+    now = time.time()
+
+    # Check rate limit
+    if ip in LOGIN_ATTEMPTS:
+        attempts, lockout_until = LOGIN_ATTEMPTS[ip]
+        if lockout_until and now < lockout_until:
+            remaining = int(lockout_until - now)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Too many attempts. Try again in {remaining} seconds.",
+            )
+        if lockout_until and now >= lockout_until:
+            LOGIN_ATTEMPTS[ip] = (0, None)
+
     user = users_col().find_one({"email": credentials.email})
     if not user or not verify_password(credentials.password, user["password_hash"]):
+        # Increment failed attempts
+        attempts, _ = LOGIN_ATTEMPTS.get(ip, (0, None))
+        attempts += 1
+        if attempts >= MAX_ATTEMPTS:
+            LOGIN_ATTEMPTS[ip] = (attempts, now + LOCKOUT_TIME)
+        else:
+            LOGIN_ATTEMPTS[ip] = (attempts, None)
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
+
+    # Reset attempts on success
+    if ip in LOGIN_ATTEMPTS:
+        del LOGIN_ATTEMPTS[ip]
 
     # Check if 2FA is enabled for this employee
     two_factor = False

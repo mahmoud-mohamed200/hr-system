@@ -34,7 +34,7 @@ def request_advance(
     """Request a salary advance."""
     emp = employees_col().find_one({"employee_id": current_user["employee_id"]})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee profile not found")
+        raise HTTPException(status_code=404, detail="لم يتم العثور على ملف تعريف الموظف")
 
     from app.services.encryption import decrypt_float
     basic_salary = decrypt_float(emp.get("salary")) or 0.0
@@ -84,11 +84,11 @@ def update_advance_status(
     try:
         oid = ObjectId(advance_id)
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid advance request ID")
+        raise HTTPException(status_code=400, detail="معرف طلب السلفة غير صحيح")
 
     adv = advances_col().find_one({"_id": oid})
     if not adv:
-        raise HTTPException(status_code=404, detail="Advance request not found")
+        raise HTTPException(status_code=404, detail="طلب السلفة غير موجود")
 
     advances_col().update_one(
         {"_id": oid},

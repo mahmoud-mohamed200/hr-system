@@ -46,20 +46,46 @@ def main():
     # 2. Run Database Seeding (Only if empty)
     print("\n🌱 الفحص: التحقق من وجود بيانات في قاعدة البيانات...")
     try:
+        # Load environment variables from backend/.env manually to support Atlas and custom settings
+        env_vars = {}
+        env_path = os.path.join("backend", ".env")
+        if os.path.exists(env_path):
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        parts = line.split("=", 1)
+                        if len(parts) == 2:
+                            env_vars[parts[0].strip()] = parts[1].strip()
+
+        mongodb_uri = env_vars.get("MONGODB_URI", "mongodb://localhost:27017")
+        # Strip potential quotes around the URI
+        if mongodb_uri.startswith('"') and mongodb_uri.endswith('"'):
+            mongodb_uri = mongodb_uri[1:-1]
+        elif mongodb_uri.startswith("'") and mongodb_uri.endswith("'"):
+            mongodb_uri = mongodb_uri[1:-1]
+
+        mongodb_db = env_vars.get("MONGODB_DB", "hr_attendance")
+        if mongodb_db.startswith('"') and mongodb_db.endswith('"'):
+            mongodb_db = mongodb_db[1:-1]
+        elif mongodb_db.startswith("'") and mongodb_db.endswith("'"):
+            mongodb_db = mongodb_db[1:-1]
+
         from pymongo import MongoClient
-        mongo_client = MongoClient("mongodb://localhost:27017/", serverSelectionTimeoutMS=2000)
-        db = mongo_client["hr_attendance"]
+        mongo_client = MongoClient(mongodb_uri, serverSelectionTimeoutMS=5000)
+        db = mongo_client[mongodb_db]
+        
+        # Access a simple property to force a connection attempt
+        mongo_client.server_info()
+        
         if db["users"].count_documents({}) == 0:
             print("🌱 قاعدة البيانات فارغة. جاري تهيئة البيانات الافتراضية...")
             subprocess.run([sys.executable, "backend/seed.py"], check=True)
         else:
             print("💾 قاعدة البيانات تحتوي على بيانات بالفعل. تم تخطي التهيئة للحفاظ على بيانات الموظفين.")
     except Exception as e:
-        print(f"⚠️ فشل التحقق من قاعدة البيانات: {e}. جاري محاولة التهيئة كبديل...")
-        try:
-            subprocess.run([sys.executable, "backend/seed.py"], check=True)
-        except Exception:
-            pass
+        print(f"⚠️ لم نتمكن من الاتصال بقاعدة البيانات للتحقق: {e}")
+        print("💾 تم تخطي تهيئة قاعدة البيانات لتفادي مسح أي بيانات موجودة.")
 
     # 3. Start Backend server
     print("\n🚀 Starting FastAPI backend (Port 8000)...")

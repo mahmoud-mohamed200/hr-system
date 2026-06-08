@@ -17,29 +17,23 @@ def seed_db():
     # Initialize connection
     db = get_db()
     
-    # 1. Clear existing collections if any (to make it a fresh start)
-    print("🧹 Cleaning existing collections...")
-    users_col().delete_many({})
-    employees_col().delete_many({})
-    departments_col().delete_many({})
-    settings_col().delete_many({})
-    leaves_col().delete_many({})
-    advances_col().delete_many({})
+    # 2. Seed Settings (Only if empty)
+    if settings_col().count_documents({}) == 0:
+        print("⚙️ Seeding settings...")
+        settings_doc = {
+            "company_name": "XQ Pharma",
+            "work_start": "11:00",
+            "work_end": "19:00",
+            "late_threshold_minutes": 15,
+            "weekend_days": ["friday"],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        settings_col().insert_one(settings_doc)
+    else:
+        print("⚙️ Settings already exist. Skipping settings seeding.")
     
-    # 2. Seed Settings
-    print("⚙️ Seeding settings...")
-    settings_doc = {
-        "company_name": "XQ Pharma",
-        "work_start": "11:00",
-        "work_end": "19:00",
-        "late_threshold_minutes": 15,
-        "weekend_days": ["friday"],
-        "updated_at": datetime.now(timezone.utc).isoformat()
-    }
-    settings_col().insert_one(settings_doc)
-    
-    # 3. Seed Departments
-    print("🏢 Seeding departments...")
+    # 3. Seed Departments (Only if they do not exist)
+    print("🏢 Checking/Seeding departments...")
     depts = [
         {"name": "HR", "description": "Human Resources", "employee_count": 0},
         {"name": "IT", "description": "Information Technology", "employee_count": 0},
@@ -48,39 +42,49 @@ def seed_db():
         {"name": "Quality Control", "description": "Quality assurance and check", "employee_count": 0},
         {"name": "R&D", "description": "Research and Development", "employee_count": 0}
     ]
-    departments_col().insert_many(depts)
+    for dept in depts:
+        if departments_col().count_documents({"name": dept["name"]}) == 0:
+            departments_col().insert_one(dept)
+            print(f"🏢 Added missing department: {dept['name']}")
     
-    # 4. Seed Admin User
-    print("👤 Seeding admin user...")
-    admin_user = {
-        "email": "admin@xqpharma.com",
-        "password_hash": hash_password("admin123"),
-        "role": "admin",
-        "employee_id": "EMP-0000"
-    }
-    users_col().insert_one(admin_user)
+    # 4. Seed Admin User (Only if it doesn't exist)
+    if users_col().count_documents({"email": "admin@xqpharma.com"}) == 0:
+        print("👤 Seeding admin user...")
+        admin_user = {
+            "email": "admin@xqpharma.com",
+            "password_hash": hash_password("admin123"),
+            "role": "admin",
+            "employee_id": "EMP-0000"
+        }
+        users_col().insert_one(admin_user)
+    else:
+        print("👤 Admin user already exists. Skipping user seeding.")
     
-    # Seed Admin Employee profile
-    admin_employee = {
-        "employee_id": "EMP-0000",
-        "name": "Administrator",
-        "email": "admin@xqpharma.com",
-        "phone": "+1234567890",
-        "department": "IT",
-        "job_title": "System Administrator",
-        "national_id": "123456789",
-        "hire_date": "2026-01-01",
-        "salary": 150000,
-        "address": "123 Tech Avenue",
-        "emergency_contact": "Emergency: +987654321",
-        "photo_url": None,
-        "is_active": True,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    employees_col().insert_one(admin_employee)
-    departments_col().update_one({"name": "IT"}, {"$inc": {"employee_count": 1}})
+    # Seed Admin Employee profile (Only if it doesn't exist)
+    if employees_col().count_documents({"employee_id": "EMP-0000"}) == 0:
+        print("👤 Seeding admin employee profile...")
+        admin_employee = {
+            "employee_id": "EMP-0000",
+            "name": "Administrator",
+            "email": "admin@xqpharma.com",
+            "phone": "+1234567890",
+            "department": "IT",
+            "job_title": "System Administrator",
+            "national_id": "123456789",
+            "hire_date": "2026-01-01",
+            "salary": 150000,
+            "address": "123 Tech Avenue",
+            "emergency_contact": "Emergency: +987654321",
+            "photo_url": None,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        employees_col().insert_one(admin_employee)
+        departments_col().update_one({"name": "IT"}, {"$inc": {"employee_count": 1}})
+    else:
+        print("👤 Admin employee profile already exists. Skipping employee profile seeding.")
     
-    print("✨ Database successfully seeded with clean configuration!")
+    print("✨ Database check and seeding process complete (no existing data was modified).")
 
 if __name__ == "__main__":
     seed_db()

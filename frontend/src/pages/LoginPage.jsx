@@ -76,7 +76,7 @@ const LoginPage = () => {
         position: 'absolute',
         width: '300px',
         height: '300px',
-        background: 'radial-gradient(circle, rgba(214,58,47,0.08) 0%, rgba(0,0,0,0) 70%)',
+        background: 'radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, rgba(0,0,0,0) 70%)',
         top: '-10%',
         right: '-5%',
         borderRadius: '50%',
@@ -208,7 +208,7 @@ const LoginPage = () => {
                 fontSize: '1rem',
                 cursor: 'pointer',
                 marginTop: '1rem',
-                boxShadow: '0 8px 24px rgba(214, 58, 47, 0.2)',
+                boxShadow: '0 8px 24px rgba(79, 70, 229, 0.25)',
                 transition: 'all 0.3s ease',
                 display: 'flex',
                 justifyContent: 'center',
@@ -237,7 +237,7 @@ const LoginPage = () => {
               <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>تم إرسال رمز تحقق مؤقت لحسابك. يرجى إدخاله للمتابعة.</p>
               
               {devOtp && (
-                <div style={{ background: 'rgba(214, 58, 47, 0.06)', border: '1px dashed var(--primary)', color: 'var(--primary)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', textAlign: 'center', marginBottom: '0.5rem' }}>
+                <div style={{ background: 'rgba(79, 70, 229, 0.06)', border: '1px dashed var(--primary)', color: 'var(--primary)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.8rem', textAlign: 'center', marginBottom: '0.5rem' }}>
                   [بيئة التطوير]: رمز التحقق هو <strong>{devOtp}</strong>
                 </div>
               )}
@@ -282,7 +282,7 @@ const LoginPage = () => {
                 fontSize: '1rem',
                 cursor: 'pointer',
                 marginTop: '1rem',
-                boxShadow: '0 8px 24px rgba(214, 58, 47, 0.2)',
+                boxShadow: '0 8px 24px rgba(79, 70, 229, 0.25)',
                 transition: 'all 0.3s ease',
                 display: 'flex',
                 justifyContent: 'center',
@@ -334,8 +334,8 @@ const LoginPage = () => {
         }
         .login-input:focus {
           border-color: var(--primary) !important;
-          box-shadow: 0 0 8px rgba(214, 58, 47, 0.15);
-          background: rgba(0, 39, 73, 0.04) !important;
+          box-shadow: 0 0 0 3px var(--primary-light);
+          background: #ffffff !important;
         }
       `}</style>
     </div>

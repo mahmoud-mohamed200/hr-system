@@ -140,7 +140,7 @@ const PayrollPage = () => {
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontWeight: '700',
-                  boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
                 }}
               >
                 اعتماد رواتب الشهر
@@ -210,7 +210,7 @@ const PayrollPage = () => {
       ) : (
         /* EMPLOYEE PAYSLIP LIST VIEW */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ background: 'rgba(214, 58, 47, 0.03)', border: '1px dashed rgba(214, 58, 47, 0.15)', padding: '1rem', borderRadius: '12px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+          <div style={{ background: 'rgba(79, 70, 229, 0.03)', border: '1px dashed rgba(79, 70, 229, 0.15)', padding: '1rem', borderRadius: '12px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
             ℹ️ مفردات مرتبك الرقمية يتم حفظها بشكل مشفر وآمن بالكامل لحماية بياناتك المالية. لعرض التفاصيل الكاملة، سيطلب منك النظام تأكيد كلمة مرور حسابك الشخصي.
           </div>
 
@@ -243,9 +243,12 @@ const PayrollPage = () => {
                         <button 
                           onClick={() => { setSelectedPayslipId(slip.id); setDecryptedPayslip(null); setConfirmPassword(''); setDecryptModalOpen(true); }}
                           style={{
-                            background: 'rgba(214, 58, 47, 0.06)',
-                            border: '1px solid rgba(214, 58, 47, 0.15)',
-                            color: 'var(--primary)', padding: '0.4rem 0.8rem', borderRadius: '6px', cursor: 'pointer', background: 'var(--glass)', border: '1px solid var(--glass-border)',
+                            background: 'var(--glass)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--primary)',
+                            padding: '0.4rem 0.8rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.3rem',
@@ -325,7 +328,7 @@ const PayrollPage = () => {
                       padding: '0.8rem',
                       fontWeight: '700',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)',
+                      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)',
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
@@ -356,68 +359,68 @@ const PayrollPage = () => {
 
                 {/* Grid Breakdown */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
                     <span style={{ color: 'var(--text-dim)' }}>الراتب الأساسي</span>
                     <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{decryptedPayslip.basic_salary} ج.م</span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
                     <span style={{ color: 'var(--text-dim)' }}>الحوافز والبدلات المعتمدة (١٠٪)</span>
                     <span style={{ color: 'var(--accent)' }}>+{decryptedPayslip.allowances} ج.م</span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
                     <span style={{ color: 'var(--text-dim)' }}>ساعات العمل الإضافي المستحقة ({decryptedPayslip.overtime_hours}س)</span>
                     <span style={{ color: 'var(--accent)' }}>+{decryptedPayslip.overtime_pay} ج.م</span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem', color: '#f87171' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
                     <span>خصم حصة التأمينات الاجتماعية (١١٪ من الأساسي)</span>
                     <span>-{decryptedPayslip.deductions_insurance} ج.م</span>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem', color: '#f87171' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
                     <span>خصم الضرائب المستحقة (١٠٪)</span>
                     <span>-{decryptedPayslip.deductions_taxes} ج.م</span>
                   </div>
 
                   {decryptedPayslip.deductions_unjustified_absence > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem', color: '#f87171' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
                       <span>خصم أيام الغياب غير المبررة</span>
                       <span>-{decryptedPayslip.deductions_unjustified_absence} ج.م</span>
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_lateness > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem', color: '#f87171' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
                       <span>خصم دقائق التأخير عن المواعيد</span>
                       <span>-{decryptedPayslip.deductions_lateness} ج.م</span>
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_loans > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem', color: '#f87171' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
                       <span>خصم قسط القرض الشهري المجدول</span>
                       <span>-{decryptedPayslip.deductions_loans} ج.م</span>
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_advances > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem', color: '#f87171' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
                       <span>خصم السلفة المؤقتة المسحوبة</span>
                       <span>-{decryptedPayslip.deductions_advances} ج.م</span>
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_penalties > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '0.4rem', color: '#f87171' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
                       <span>خصم الجزاءات الإدارية الصادرة</span>
                       <span>-{decryptedPayslip.deductions_penalties} ج.م</span>
                     </div>
                   )}
 
                   {/* Net Pay */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--primary)', paddingWait: '1rem', marginTop: '1rem', fontSize: '1.15rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--primary)', paddingTop: '1rem', marginTop: '1rem', fontSize: '1.15rem' }}>
                     <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>صافي المرتب المستلم</span>
                     <span style={{ color: 'var(--primary)', fontWeight: '800' }}>{decryptedPayslip.net_salary} ج.م</span>
                   </div>

@@ -317,8 +317,11 @@ def decrypt_payslip(
         
     decrypted_str = decrypt_data(encrypted_data)
     import json
+    import logging
+    logger = logging.getLogger(__name__)
     try:
         decrypted_json = json.loads(decrypted_str)
         return decrypted_json
-    except Exception:
-        raise HTTPException(status_code=500, detail="فشل فك تشفير البيانات")
+    except Exception as e:
+        logger.error(f"Payslip JSON load failed: {e}. Decrypted string length: {len(decrypted_str) if decrypted_str else 0}")
+        raise HTTPException(status_code=500, detail="فشل فك تشفير البيانات - قد يكون هناك تعارض في مفتاح التشفير")

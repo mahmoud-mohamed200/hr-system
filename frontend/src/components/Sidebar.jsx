@@ -31,7 +31,7 @@ const Sidebar = () => {
     { path: '/settings', label: 'الإعدادات', icon: Settings, roles: ['admin', 'hr', 'employee'] },
   ];
 
-  const filteredItems = menuItems.filter(item => item.roles.includes(user?.role));
+  const filteredItems = menuItems.filter(item => user?.role === 'ceo' || item.roles.includes(user?.role));
 
   return (
     <aside className="sidebar" style={{ direction: 'rtl' }}>

@@ -294,7 +294,7 @@ const EmployeesPage = () => {
             alignItems: 'center',
             gap: '0.5rem',
             fontWeight: '700',
-            boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
           }}
         >
           <UserPlus size={16} />
@@ -594,7 +594,7 @@ const EmployeesPage = () => {
                     fontWeight: '700',
                     cursor: 'pointer',
                     marginTop: '1rem',
-                    boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
                   }}
                 >
                   {isEdit ? 'حفظ التعديلات الحالية' : 'إنشاء ملف الموظف'}
@@ -914,7 +914,7 @@ const EmployeesPage = () => {
                     padding: '0.8rem',
                     fontWeight: '700',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',

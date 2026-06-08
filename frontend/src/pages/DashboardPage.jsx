@@ -100,7 +100,7 @@ const DashboardPage = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '0.4rem',
-              boxShadow: '0 4px 12px rgba(214, 58, 47, 0.2)'
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
             }}
           >
             <UserCheck size={16} />
@@ -229,7 +229,7 @@ const DashboardPage = () => {
         <div style={{ width: '100%', height: 300 }}>
           <ResponsiveContainer>
             <BarChart data={deptRates}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" />
               <XAxis dataKey="department" stroke="var(--text-dim)" fontSize={12} />
               <YAxis stroke="var(--text-dim)" domain={[0, 100]} fontSize={12} />
               <Tooltip 

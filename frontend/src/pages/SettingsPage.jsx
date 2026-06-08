@@ -440,7 +440,7 @@ const SettingsPage = () => {
                         type="button"
                         onClick={() => handleWeekendChange(day.key)}
                         style={{
-                          background: isSelected ? 'rgba(214, 58, 47, 0.08)' : 'rgba(0, 39, 73, 0.02)',
+                          background: isSelected ? 'rgba(79, 70, 229, 0.08)' : 'rgba(0, 39, 73, 0.02)',
                           border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--glass-border)'}`,
                           color: isSelected ? 'var(--primary)' : 'var(--text-main)',
                           padding: '0.4rem 0.8rem',
@@ -493,12 +493,12 @@ const SettingsPage = () => {
           border-radius: 8px;
           font-weight: 700;
           cursor: pointer;
-          box-shadow: 0 4px 12px rgba(214, 58, 47, 0.2);
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
           transition: all 0.3s ease;
         }
         .btn-primary:hover {
           transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(214, 58, 47, 0.3);
+          box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
         }
         .btn-primary:disabled {
           opacity: 0.7;

@@ -17,8 +17,26 @@ def run_tests():
     print("==================================================")
 
     # Connect directly to MongoDB for encryption verification
-    mongo_client = MongoClient("mongodb://localhost:27017/")
-    db = mongo_client["hr_attendance"]
+    import os
+    from dotenv import load_dotenv
+    backend_env = os.path.join("backend", ".env")
+    if os.path.exists(backend_env):
+        load_dotenv(backend_env)
+        
+    mongo_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
+    db_name = os.getenv("MONGODB_DB", "hr_attendance")
+    
+    # Safety Check: Do not wipe production/Atlas database during automated testing
+    is_local = "localhost" in mongo_uri or "127.0.0.1" in mongo_uri
+    if not is_local:
+        print("\n❌ خطأ أمان (Security Error):")
+        print("أنت تحاول تشغيل ملف الاختبارات التلقائية (verify_hr_portal.py) على قاعدة بيانات سحابية (MongoDB Atlas).")
+        print("لقد تم إيقاف العملية تلقائياً لمنع مسح بيانات الموظفين الحقيقية.")
+        print(f"رابط قاعدة البيانات الحالي: {mongo_uri}")
+        sys.exit(1)
+
+    mongo_client = MongoClient(mongo_uri)
+    db = mongo_client[db_name]
     employees_col = db["employees"]
     otp_col = db["otp"]
 
@@ -84,14 +102,14 @@ def run_tests():
     emp_email = "test.egyptian@xqpharma.com"
     # Ensure clean state
     db["payrolls"].delete_many({"month": target_month})
-    db["leaves"].delete_many({"employee_id": {"$ne": "EMP-0000"}})
-    db["loans"].delete_many({"employee_id": {"$ne": "EMP-0000"}})
-    db["advances"].delete_many({"employee_id": {"$ne": "EMP-0000"}})
-    db["attendance"].delete_many({"employee_id": {"$ne": "EMP-0000"}})
-    db["payrolls"].delete_many({"employee_id": {"$ne": "EMP-0000"}})
-    db["assets"].delete_many({"employee_id": {"$ne": "EMP-0000"}})
-    employees_col.delete_many({"employee_id": {"$ne": "EMP-0000"}})
-    db["users"].delete_many({"employee_id": {"$ne": "EMP-0000"}})
+    db["leaves"].delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
+    db["loans"].delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
+    db["advances"].delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
+    db["attendance"].delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
+    db["payrolls"].delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
+    db["assets"].delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
+    employees_col.delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
+    db["users"].delete_many({"employee_id": {"$nin": ["EMP-0000", "EMP-7777"]}})
 
     # Contract ends in 15 days to test the expiration warning endpoint
     contract_end = (today + datetime.timedelta(days=15)).strftime("%Y-%m-%d")
