@@ -54,25 +54,28 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     lateness_minutes = 0.0
     checked_in_dates = set()
     
-    for r in attendance_records:
-        checked_in_dates.add(r["date"])
-        # Daily overtime
-        hw = r.get("hours_worked") or 0.0
-        if hw > 8.0:
-            overtime_hours += (hw - 8.0)
-            
-        # Lateness minutes
-        if r.get("status") == "late" and r.get("check_in"):
-            try:
-                # Calculate late duration against work start
-                t_start = datetime.strptime(settings.WORK_START, "%H:%M")
-                t_check = datetime.strptime(r["check_in"][:5], "%H:%M")
-                diff = (t_check - t_start).total_seconds() / 60
-                if diff > settings.LATE_THRESHOLD_MINUTES:
-                    lateness_minutes += diff
-            except Exception:
-                # Fallback to general late penalty minutes
-                lateness_minutes += 30
+    is_ceo = emp_id == "EMP-7777" or emp.get("job_title") == "الرئيس التنفيذي" or emp.get("email") == "ceo@xqpharma.com"
+    
+    if not is_ceo:
+        for r in attendance_records:
+            checked_in_dates.add(r["date"])
+            # Daily overtime
+            hw = r.get("hours_worked") or 0.0
+            if hw > 8.0:
+                overtime_hours += (hw - 8.0)
+                
+            # Lateness minutes
+            if r.get("status") == "late" and r.get("check_in"):
+                try:
+                    # Calculate late duration against work start
+                    t_start = datetime.strptime(settings.WORK_START, "%H:%M")
+                    t_check = datetime.strptime(r["check_in"][:5], "%H:%M")
+                    diff = (t_check - t_start).total_seconds() / 60
+                    if diff > settings.LATE_THRESHOLD_MINUTES:
+                        lateness_minutes += diff
+                except Exception:
+                    # Fallback to general late penalty minutes
+                    lateness_minutes += 30
                 
     hourly_rate = basic_salary / 240.0 if basic_salary > 0 else 0.0
     overtime_pay = round(overtime_hours * hourly_rate * 1.5, 2)
@@ -90,19 +93,21 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     deductions_taxes = round(gross_salary * 0.10, 2)
     
     # 3. Unjustified Absence Deduction
-    # Find active days in month up to today (if current month) or full month
-    all_workdays = _get_workdays_in_month(month)
-    today_str = datetime.now().strftime("%Y-%m-%d")
-    
-    absent_days = 0
-    for day in all_workdays:
-        # If checking current month, don't penalize for future workdays
-        if day > today_str:
-            continue
-        if day not in checked_in_dates:
-            absent_days += 1
-            
-    deductions_unjustified_absence = round(absent_days * (basic_salary / 30.0), 2)
+    deductions_unjustified_absence = 0.0
+    if not is_ceo:
+        # Find active days in month up to today (if current month) or full month
+        all_workdays = _get_workdays_in_month(month)
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        
+        absent_days = 0
+        for day in all_workdays:
+            # If checking current month, don't penalize for future workdays
+            if day > today_str:
+                continue
+            if day not in checked_in_dates:
+                absent_days += 1
+                
+        deductions_unjustified_absence = round(absent_days * (basic_salary / 30.0), 2)
     
     # 4. Loan Installments Deduction
     deductions_loans = 0.0

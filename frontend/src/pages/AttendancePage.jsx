@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 const AttendancePage = () => {
   const { user: currentUser } = useAuth();
   const isAdminOrHr = ['admin', 'hr'].includes(currentUser?.role);
+  const isCeo = currentUser?.role === 'ceo';
 
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -194,87 +195,91 @@ const AttendancePage = () => {
         
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {/* Direct self manual check-in/out buttons */}
-          <button 
-            onClick={() => handleSelfCheck('in')}
-            disabled={loading}
-            style={{
-              background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-              color: '#ffffff',
-              border: 'none',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '700',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-            }}
-          >
-            <UserCheck size={16} />
-            <span>تسجيل حضور يدوي</span>
-          </button>
+          {!isCeo && (
+            <>
+              <button 
+                onClick={() => handleSelfCheck('in')}
+                disabled={loading}
+                style={{
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                }}
+              >
+                <UserCheck size={16} />
+                <span>تسجيل حضور يدوي</span>
+              </button>
 
-          <button 
-            onClick={() => handleSelfCheck('out')}
-            disabled={loading}
-            style={{
-              background: 'rgba(0, 39, 73, 0.05)',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text-main)',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-          >
-            <UserX size={16} color="var(--primary)" />
-            <span>تسجيل انصراف يدوي</span>
-          </button>
+              <button 
+                onClick={() => handleSelfCheck('out')}
+                disabled={loading}
+                style={{
+                  background: 'rgba(0, 39, 73, 0.05)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'var(--text-main)',
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <UserX size={16} color="var(--primary)" />
+                <span>تسجيل انصراف يدوي</span>
+              </button>
 
-          {/* Employee GPS action buttons */}
-          <button 
-            onClick={() => handleGpsCheck('in')}
-            disabled={checkingGps}
-            style={{
-              background: 'rgba(0, 39, 73, 0.02)',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text-main)',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-          >
-            <MapPin size={16} color="var(--primary)" />
-            <span>حضور بالـ GPS</span>
-          </button>
+              {/* Employee GPS action buttons */}
+              <button 
+                onClick={() => handleGpsCheck('in')}
+                disabled={checkingGps}
+                style={{
+                  background: 'rgba(0, 39, 73, 0.02)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'var(--text-main)',
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <MapPin size={16} color="var(--primary)" />
+                <span>حضور بالـ GPS</span>
+              </button>
 
-          <button 
-            onClick={() => handleGpsCheck('out')}
-            disabled={checkingGps}
-            style={{
-              background: 'rgba(0, 39, 73, 0.02)',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text-main)',
-              padding: '0.6rem 1.2rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-          >
-            <MapPin size={16} color="var(--text-dim)" />
-            <span>انصراف بالـ GPS</span>
-          </button> 
+              <button 
+                onClick={() => handleGpsCheck('out')}
+                disabled={checkingGps}
+                style={{
+                  background: 'rgba(0, 39, 73, 0.02)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'var(--text-main)',
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <MapPin size={16} color="var(--text-dim)" />
+                <span>انصراف بالـ GPS</span>
+              </button>
+            </>
+          )} 
 
           {isAdminOrHr && (
             <>
@@ -508,11 +513,13 @@ const AttendancePage = () => {
                   style={{ direction: 'rtl' }}
                 >
                   <option value="">اختر الموظف...</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>
-                      {emp.name} ({emp.employee_id})
-                    </option>
-                  ))}
+                  {employees
+                    .filter(emp => emp.employee_id !== 'EMP-7777' && emp.job_title !== 'الرئيس التنفيذي')
+                    .map(emp => (
+                      <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>
+                        {emp.name} ({emp.employee_id})
+                      </option>
+                    ))}
                 </select>
               </div>
 

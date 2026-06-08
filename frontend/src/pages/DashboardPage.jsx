@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import client from '../api/client';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 import { 
   Users, 
   UserCheck, 
@@ -22,6 +23,8 @@ import {
 } from 'recharts';
 
 const DashboardPage = () => {
+  const { user } = useAuth();
+  const isCeo = user?.role === 'ceo';
   const [stats, setStats] = useState({
     totalEmployees: 0,
     presentToday: 0,
@@ -87,44 +90,48 @@ const DashboardPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <Header title="لوحة الحضور والمتابعة" />
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <button 
-            onClick={() => handleSelfCheck('in')}
-            style={{
-              background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-              color: '#ffffff',
-              border: 'none',
-              padding: '0.5rem 1.2rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '700',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
-            }}
-          >
-            <UserCheck size={16} />
-            <span>تسجيل حضور يدوي</span>
-          </button>
+          {!isCeo && (
+            <>
+              <button 
+                onClick={() => handleSelfCheck('in')}
+                style={{
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.5rem 1.2rem',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
+                }}
+              >
+                <UserCheck size={16} />
+                <span>تسجيل حضور يدوي</span>
+              </button>
 
-          <button 
-            onClick={() => handleSelfCheck('out')}
-            style={{
-              background: 'rgba(0, 39, 73, 0.05)',
-              border: '1px solid var(--glass-border)',
-              color: 'var(--text-main)',
-              padding: '0.5rem 1.2rem',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-          >
-            <UserX size={16} color="var(--primary)" />
-            <span>تسجيل انصراف يدوي</span>
-          </button>
+              <button 
+                onClick={() => handleSelfCheck('out')}
+                style={{
+                  background: 'rgba(0, 39, 73, 0.05)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'var(--text-main)',
+                  padding: '0.5rem 1.2rem',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <UserX size={16} color="var(--primary)" />
+                <span>تسجيل انصراف يدوي</span>
+              </button>
+            </>
+          )}
 
           <button 
             onClick={handleRefresh} 

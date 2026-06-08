@@ -75,8 +75,13 @@ def _record_to_response(rec: dict) -> AttendanceRecord:
 def get_today_summary(current_user: dict = Depends(get_current_user)):
     """Get today's attendance summary across all employees."""
     today = _get_today_str()
-    total_employees = employees_col().count_documents({"is_active": True})
-    today_records = list(attendance_col().find({"date": today}))
+    total_employees = employees_col().count_documents({
+        "is_active": True,
+        "employee_id": {"$ne": "EMP-7777"},
+        "email": {"$ne": "ceo@xqpharma.com"},
+        "job_title": {"$ne": "الرئيس التنفيذي"}
+    })
+    today_records = list(attendance_col().find({"date": today, "employee_id": {"$ne": "EMP-7777"}}))
 
     present = len(today_records)
     late = sum(1 for r in today_records if r.get("status") == "late")
@@ -110,6 +115,8 @@ def list_attendance(
         query["date"] = date
     if employee_id:
         query["employee_id"] = employee_id
+    else:
+        query["employee_id"] = {"$ne": "EMP-7777"}
     if department:
         query["department"] = department
     if status_filter:
@@ -164,6 +171,8 @@ def manual_check_in(
     emp = employees_col().find_one({"employee_id": data.employee_id})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
+    if data.employee_id == "EMP-7777" or emp.get("job_title") == "الرئيس التنفيذي" or emp.get("email") == "ceo@xqpharma.com":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
 
     today = _get_today_str()
 
@@ -208,6 +217,8 @@ def manual_check_out(
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
     """Manually check out an employee."""
+    if data.employee_id == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
     today = _get_today_str()
     record = attendance_col().find_one(
         {"employee_id": data.employee_id, "date": today}
@@ -239,6 +250,8 @@ def self_check_in(
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
+    if current_user.get("role") == "ceo" or emp_id == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
 
     emp = employees_col().find_one({"employee_id": emp_id})
     if not emp:
@@ -289,6 +302,8 @@ def self_check_out(
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
+    if current_user.get("role") == "ceo" or emp_id == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
 
     today = _get_today_str()
     record = attendance_col().find_one(
@@ -346,6 +361,8 @@ def gps_check_in(
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
+    if current_user.get("role") == "ceo" or emp_id == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
 
     emp = employees_col().find_one({"employee_id": emp_id})
     if not emp:
@@ -404,6 +421,8 @@ def gps_check_out(
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
+    if current_user.get("role") == "ceo" or emp_id == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
 
     # Geofence validation
     dist = _get_distance_meters(
@@ -441,7 +460,12 @@ def gps_check_out(
 def sync_biometric(current_user: dict = Depends(require_role("admin", "hr"))):
     """Mock API simulating sync with fingerprint biometric devices daily."""
     today = _get_today_str()
-    active_employees = list(employees_col().find({"is_active": True}))
+    active_employees = list(employees_col().find({
+        "is_active": True,
+        "employee_id": {"$ne": "EMP-7777"},
+        "email": {"$ne": "ceo@xqpharma.com"},
+        "job_title": {"$ne": "الرئيس التنفيذي"}
+    }))
     synced_count = 0
     
     for emp in active_employees:

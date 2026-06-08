@@ -20,8 +20,13 @@ def get_daily_report(
     if not date:
         date = datetime.now().strftime("%Y-%m-%d")
 
-    records = list(attendance_col().find({"date": date}))
-    total_employees = employees_col().count_documents({"is_active": True})
+    records = list(attendance_col().find({"date": date, "employee_id": {"$ne": "EMP-7777"}}))
+    total_employees = employees_col().count_documents({
+        "is_active": True,
+        "employee_id": {"$ne": "EMP-7777"},
+        "email": {"$ne": "ceo@xqpharma.com"},
+        "job_title": {"$ne": "الرئيس التنفيذي"}
+    })
 
     present = len(records)
     late = sum(1 for r in records if r.get("status") == "late")
@@ -71,11 +76,16 @@ def get_weekly_report(
             raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
 
     dates = [(start + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
-    total_employees = employees_col().count_documents({"is_active": True})
+    total_employees = employees_col().count_documents({
+        "is_active": True,
+        "employee_id": {"$ne": "EMP-7777"},
+        "email": {"$ne": "ceo@xqpharma.com"},
+        "job_title": {"$ne": "الرئيس التنفيذي"}
+    })
 
     daily_stats = []
     for d in dates:
-        records = list(attendance_col().find({"date": d}))
+        records = list(attendance_col().find({"date": d, "employee_id": {"$ne": "EMP-7777"}}))
         present = len(records)
         late = sum(1 for r in records if r.get("status") == "late")
         daily_stats.append({
@@ -102,8 +112,13 @@ def get_monthly_report(
         month = datetime.now().strftime("%Y-%m")
 
     # Fetch all records for the month
-    records = list(attendance_col().find({"date": {"$regex": f"^{month}"}}))
-    total_employees = employees_col().count_documents({"is_active": True})
+    records = list(attendance_col().find({"date": {"$regex": f"^{month}"}, "employee_id": {"$ne": "EMP-7777"}}))
+    total_employees = employees_col().count_documents({
+        "is_active": True,
+        "employee_id": {"$ne": "EMP-7777"},
+        "email": {"$ne": "ceo@xqpharma.com"},
+        "job_title": {"$ne": "الرئيس التنفيذي"}
+    })
 
     # Group by date
     days_data = {}
@@ -145,6 +160,8 @@ def get_employee_report(
     if current_user.get("role") == "employee" and current_user.get("employee_id") != employee_id:
         raise HTTPException(status_code=403, detail="Not authorized to view other employees' reports")
 
+    if employee_id == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
     emp = employees_col().find_one({"employee_id": employee_id})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")

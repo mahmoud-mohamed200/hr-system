@@ -21,10 +21,15 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     today = _get_today_str()
 
     # 1. Employee totals
-    total_employees = employees_col().count_documents({"is_active": True})
+    total_employees = employees_col().count_documents({
+        "is_active": True,
+        "employee_id": {"$ne": "EMP-7777"},
+        "email": {"$ne": "ceo@xqpharma.com"},
+        "job_title": {"$ne": "الرئيس التنفيذي"}
+    })
 
     # 2. Today's attendance
-    today_records = list(attendance_col().find({"date": today}))
+    today_records = list(attendance_col().find({"date": today, "employee_id": {"$ne": "EMP-7777"}}))
     present_today = len(today_records)
     late_today = sum(1 for r in today_records if r.get("status") == "late")
     on_time_today = sum(1 for r in today_records if r.get("status") == "on_time")
@@ -39,9 +44,19 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     dept_rates = []
     for d in depts:
         dept_name = d["name"]
-        dept_emps = employees_col().count_documents({"department": dept_name, "is_active": True})
+        dept_emps = employees_col().count_documents({
+            "department": dept_name,
+            "is_active": True,
+            "employee_id": {"$ne": "EMP-7777"},
+            "email": {"$ne": "ceo@xqpharma.com"},
+            "job_title": {"$ne": "الرئيس التنفيذي"}
+        })
         if dept_emps > 0:
-            dept_present = attendance_col().count_documents({"date": today, "department": dept_name})
+            dept_present = attendance_col().count_documents({
+                "date": today,
+                "department": dept_name,
+                "employee_id": {"$ne": "EMP-7777"}
+            })
             rate = round((dept_present / dept_emps) * 100)
         else:
             rate = 100  # Default if no employees
@@ -54,7 +69,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     # 5. Recent 10 attendance events (across all time, but sorted descending)
     recent_cursor = (
         attendance_col()
-        .find()
+        .find({"employee_id": {"$ne": "EMP-7777"}})
         .sort([("date", -1), ("check_in", -1)])
         .limit(10)
     )
