@@ -21,7 +21,10 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { useAuth } from '../context/AuthContext';
+
 const EmployeesPage = () => {
+  const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [contractAlerts, setContractAlerts] = useState([]);
@@ -437,34 +440,40 @@ const EmployeesPage = () => {
                       >
                         <Camera size={14} />
                       </button>
-                      <button 
-                        onClick={() => openEditModal(emp)}
-                        title="الملف الرقمي والتعديل"
-                        style={{
-                          background: 'rgba(0, 39, 73, 0.03)',
-                          border: '1px solid var(--glass-border)',
-                          color: 'var(--text-main)',
-                          padding: '0.4rem',
-                          borderRadius: '6px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(emp.employee_id)}
-                        title="حذف الملف"
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          color: '#f87171',
-                          padding: '0.4rem',
-                          borderRadius: '6px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {/* Hide edit if it's CEO and current user is not CEO */}
+                      {!( (emp.employee_id === 'EMP-7777' || emp.job_title === 'الرئيس التنفيذي') && user?.role !== 'ceo' ) && (
+                        <button 
+                          onClick={() => openEditModal(emp)}
+                          title="الملف الرقمي والتعديل"
+                          style={{
+                            background: 'rgba(0, 39, 73, 0.03)',
+                            border: '1px solid var(--glass-border)',
+                            color: 'var(--text-main)',
+                            padding: '0.4rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                      )}
+                      {/* Never allow deletion of the CEO */}
+                      {!(emp.employee_id === 'EMP-7777' || emp.job_title === 'الرئيس التنفيذي') && (
+                        <button 
+                          onClick={() => handleDelete(emp.employee_id)}
+                          title="حذف الملف"
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            color: '#f87171',
+                            padding: '0.4rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
