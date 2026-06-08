@@ -24,8 +24,7 @@ import {
 
 const ReportsPage = () => {
   const { user } = useAuth();
-  const isAdminOrHr = ['admin', 'hr'].includes(user?.role);
-  const isCeo = user?.role === 'ceo';
+  const isHrOrCeo = ['hr', 'ceo'].includes(user?.role);
   const [employees, setEmployees] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7)); // YYYY-MM
   const [selectedEmpId, setSelectedEmpId] = useState('');
@@ -51,7 +50,7 @@ const ReportsPage = () => {
   }, []);
 
   const fetchEmployees = async () => {
-    if (!isAdminOrHr && !isCeo) return;
+    if (!isHrOrCeo) return;
     try {
       const res = await client.get('/employees?per_page=100');
       setEmployees(res.data.employees);
@@ -90,13 +89,13 @@ const ReportsPage = () => {
 
   useEffect(() => {
     fetchEmployees();
-  }, [isAdminOrHr, isCeo]);
+  }, [isHrOrCeo]);
 
   useEffect(() => {
-    if (!isAdminOrHr && !isCeo && user?.employee_id) {
+    if (!isHrOrCeo && user?.employee_id) {
       setSelectedEmpId(user.employee_id);
     }
-  }, [user, isAdminOrHr, isCeo]);
+  }, [user, isHrOrCeo]);
 
   useEffect(() => {
     if (selectedEmpId) {
@@ -137,7 +136,7 @@ const ReportsPage = () => {
           ))}
         </select>
 
-        {(isAdminOrHr || isCeo) && (
+        {isHrOrCeo && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem' }}>
               <User size={16} color="var(--text-dim)" />

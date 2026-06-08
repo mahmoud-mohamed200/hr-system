@@ -55,7 +55,7 @@ const SettingsPage = () => {
 
   // Fetch system settings if admin/hr
   const fetchSystemSettings = async () => {
-    if (user?.role !== 'admin' && user?.role !== 'hr') return;
+    if (user?.role !== 'admin' && user?.role !== 'ceo') return;
     setSystemLoading(true);
     try {
       const res = await client.get('/settings');
@@ -202,7 +202,7 @@ const SettingsPage = () => {
     { key: 'sunday', label: 'الأحد' }
   ];
 
-  const hasSystemAccess = user?.role === 'admin' || user?.role === 'hr';
+  const hasSystemAccess = user?.role === 'admin' || user?.role === 'ceo';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', direction: 'rtl', textAlign: 'right' }}>

@@ -17,85 +17,165 @@ def _get_today_str() -> str:
 
 @router.get("/stats")
 def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
-    """Aggregate stats for the admin/HR dashboard."""
+    """Aggregate stats based on user role."""
     today = _get_today_str()
+    month_str = today[:7]  # YYYY-MM
+    user_role = current_user.get("role")
 
-    # 1. Employee totals
-    total_employees = employees_col().count_documents({
-        "is_active": True,
-        "employee_id": {"$ne": "EMP-7777"},
-        "email": {"$ne": "ceo@xqpharma.com"},
-        "job_title": {"$ne": "الرئيس التنفيذي"}
-    })
-
-    # 2. Today's attendance
-    today_records = list(attendance_col().find({"date": today, "employee_id": {"$ne": "EMP-7777"}}))
-    present_today = len(today_records)
-    late_today = sum(1 for r in today_records if r.get("status") == "late")
-    on_time_today = sum(1 for r in today_records if r.get("status") == "on_time")
-    absent_today = max(0, total_employees - present_today)
-
-    # 3. Active cameras count
-    camera_count = len(settings.CAMERA_CONFIG)
-
-    # 4. Department-wise attendance rates
-    # Get all departments
-    depts = list(departments_col().find())
-    dept_rates = []
-    for d in depts:
-        dept_name = d["name"]
-        dept_emps = employees_col().count_documents({
-            "department": dept_name,
+    # 1. CEO and HR dashboard (full attendance and organization overview)
+    if user_role in ["hr", "ceo"]:
+        total_employees = employees_col().count_documents({
             "is_active": True,
             "employee_id": {"$ne": "EMP-7777"},
             "email": {"$ne": "ceo@xqpharma.com"},
             "job_title": {"$ne": "الرئيس التنفيذي"}
         })
-        if dept_emps > 0:
-            dept_present = attendance_col().count_documents({
-                "date": today,
+
+        today_records = list(attendance_col().find({"date": today, "employee_id": {"$ne": "EMP-7777"}}))
+        present_today = len(today_records)
+        late_today = sum(1 for r in today_records if r.get("status") == "late")
+        on_time_today = sum(1 for r in today_records if r.get("status") == "on_time")
+        absent_today = max(0, total_employees - present_today)
+        camera_count = len(settings.CAMERA_CONFIG)
+
+        depts = list(departments_col().find())
+        dept_rates = []
+        for d in depts:
+            dept_name = d["name"]
+            dept_emps = employees_col().count_documents({
                 "department": dept_name,
-                "employee_id": {"$ne": "EMP-7777"}
+                "is_active": True,
+                "employee_id": {"$ne": "EMP-7777"},
+                "email": {"$ne": "ceo@xqpharma.com"},
+                "job_title": {"$ne": "الرئيس التنفيذي"}
             })
-            rate = round((dept_present / dept_emps) * 100)
-        else:
-            rate = 100  # Default if no employees
-        dept_rates.append({
-            "department": dept_name,
-            "rate": rate,
-            "employee_count": dept_emps
+            if dept_emps > 0:
+                dept_present = attendance_col().count_documents({
+                    "date": today,
+                    "department": dept_name,
+                    "employee_id": {"$ne": "EMP-7777"}
+                })
+                rate = round((dept_present / dept_emps) * 100)
+            else:
+                rate = 100
+            dept_rates.append({
+                "department": dept_name,
+                "rate": rate,
+                "employee_count": dept_emps
+            })
+
+        recent_cursor = (
+            attendance_col()
+            .find({"employee_id": {"$ne": "EMP-7777"}})
+            .sort([("date", -1), ("check_in", -1)])
+            .limit(10)
+        )
+        
+        recent_events = []
+        for r in recent_cursor:
+            recent_events.append({
+                "id": str(r["_id"]),
+                "employee_id": r["employee_id"],
+                "name": r.get("employee_name", ""),
+                "department": r.get("department", ""),
+                "job_title": r.get("job_title", ""),
+                "date": r["date"],
+                "time": r.get("check_in") or r.get("check_out") or "",
+                "status": "In" if r.get("check_in") and not r.get("check_out") else "Out" if r.get("check_out") else "In"
+            })
+
+        return {
+            "role": user_role,
+            "stats": {
+                "totalEmployees": total_employees,
+                "presentToday": present_today,
+                "absentToday": absent_today,
+                "lateToday": late_today,
+                "onTimeToday": on_time_today,
+                "cameraCount": camera_count
+            },
+            "departmentRates": dept_rates,
+            "recentEvents": recent_events
+        }
+
+    # 2. Admin dashboard (assets and payroll system stats)
+    elif user_role == "admin":
+        from app.database import assets_col, payrolls_col
+        total_assets = assets_col().count_documents({})
+        assigned_assets = assets_col().count_documents({"status": "assigned"})
+        total_employees = employees_col().count_documents({"is_active": True})
+        
+        # Check current month payroll status
+        payroll_doc = payrolls_col().find_one({"month": month_str})
+        payroll_status = "approved" if payroll_doc and payroll_doc.get("status") == "approved" else "draft"
+
+        return {
+            "role": "admin",
+            "stats": {
+                "totalAssets": total_assets,
+                "assignedAssets": assigned_assets,
+                "totalEmployees": total_employees,
+                "payrollStatus": payroll_status
+            }
+        }
+
+    # 3. Employee dashboard (personal attendance, check-in log, leaves/loans updates)
+    else:
+        emp_id = current_user.get("employee_id")
+        
+        # Get personal summary stats for current month
+        present_days = attendance_col().count_documents({
+            "employee_id": emp_id,
+            "date": {"$regex": f"^{month_str}"},
+            "status": {"$in": ["on_time", "late", "excused"]}
+        })
+        late_days = attendance_col().count_documents({
+            "employee_id": emp_id,
+            "date": {"$regex": f"^{month_str}"},
+            "status": "late"
+        })
+        absent_days = attendance_col().count_documents({
+            "employee_id": emp_id,
+            "date": {"$regex": f"^{month_str}"},
+            "status": "absent"
         })
 
-    # 5. Recent 10 attendance events (across all time, but sorted descending)
-    recent_cursor = (
-        attendance_col()
-        .find({"employee_id": {"$ne": "EMP-7777"}})
-        .sort([("date", -1), ("check_in", -1)])
-        .limit(10)
-    )
-    
-    recent_events = []
-    for r in recent_cursor:
-        recent_events.append({
-            "id": str(r["_id"]),
-            "employee_id": r["employee_id"],
-            "name": r.get("employee_name", ""),
-            "department": r.get("department", ""),
-            "job_title": r.get("job_title", ""),
-            "date": r["date"],
-            "time": r.get("check_in") or r.get("check_out") or "",
-            "status": "In" if r.get("check_in") and not r.get("check_out") else "Out" if r.get("check_out") else "In"
-        })
+        # Today's check-in/out status
+        today_rec = attendance_col().find_one({"employee_id": emp_id, "date": today})
+        today_check_in = today_rec.get("check_in") if today_rec else None
+        today_check_out = today_rec.get("check_out") if today_rec else None
+        
+        status_map_ar = {
+            "on_time": "منضبط",
+            "late": "متأخر",
+            "absent": "غائب",
+            "leave": "إجازة",
+            "excused": "مستثنى"
+        }
+        today_status = status_map_ar.get(today_rec.get("status"), "غير مسجل") if today_rec else "لم يسجل بعد"
 
-    return {
-        "stats": {
-            "totalEmployees": total_employees,
-            "presentToday": present_today,
-            "absentToday": absent_today,
-            "lateToday": late_today,
-            "onTimeToday": on_time_today,
-            "cameraCount": camera_count
-        },
-        "departmentRates": dept_rates,
-        "recentEvents": recent_events
-    }
+        # Recent personal records
+        recent_cursor = attendance_col().find({"employee_id": emp_id}).sort("date", -1).limit(10)
+        recent_events = []
+        for r in recent_cursor:
+            recent_events.append({
+                "id": str(r["_id"]),
+                "date": r["date"],
+                "check_in": r.get("check_in"),
+                "check_out": r.get("check_out"),
+                "status": status_map_ar.get(r.get("status"), r.get("status", "غائب")),
+                "notes": r.get("notes") or ""
+            })
+
+        return {
+            "role": "employee",
+            "stats": {
+                "presentDays": present_days,
+                "lateDays": late_days,
+                "absentDays": absent_days,
+                "todayCheckIn": today_check_in,
+                "todayCheckOut": today_check_out,
+                "todayStatus": today_status
+            },
+            "recentEvents": recent_events
+        }

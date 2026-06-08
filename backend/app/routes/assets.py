@@ -30,7 +30,7 @@ def list_assets(
     current_user: dict = Depends(get_current_user),
 ):
     """List all assets. Employees see only assets assigned to them, HR/Admin see all."""
-    if current_user["role"] in ["admin", "hr", "ceo"]:
+    if current_user["role"] in ["admin", "ceo"]:
         cursor = assets_col().find().sort("name", 1)
     else:
         cursor = assets_col().find({"employee_id": current_user["employee_id"]})
@@ -41,7 +41,7 @@ def list_assets(
 @router.post("", response_model=AssetResponse, status_code=status.HTTP_201_CREATED)
 def create_asset(
     data: AssetCreate,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("admin")),
 ):
     """Create a new asset. Admin/HR only."""
     # Check serial number uniqueness
@@ -79,7 +79,7 @@ def create_asset(
 def assign_asset(
     asset_id: str,
     data: AssetAssign,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("admin")),
 ):
     """Assign an asset to an employee. Admin/HR only."""
     try:
@@ -115,7 +115,7 @@ def assign_asset(
 @router.post("/{asset_id}/return", response_model=AssetResponse)
 def return_asset(
     asset_id: str,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("admin")),
 ):
     """Return an asset to inventory. Admin/HR only."""
     try:

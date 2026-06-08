@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/reports", tags=["Reports"])
 @router.get("/daily")
 def get_daily_report(
     date: Optional[str] = Query(None),
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Generate daily attendance report."""
     if not date:
@@ -63,7 +63,7 @@ def get_daily_report(
 @router.get("/weekly")
 def get_weekly_report(
     start_date: Optional[str] = Query(None),
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Generate weekly attendance report."""
     if not start_date:
@@ -105,7 +105,7 @@ def get_weekly_report(
 @router.get("/monthly")
 def get_monthly_report(
     month: Optional[str] = Query(None), # Format YYYY-MM
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Generate monthly attendance report."""
     if not month:
@@ -157,7 +157,7 @@ def get_employee_report(
 ):
     """Generate individual report for an employee."""
     # Check authorization (non-admins can only see their own report)
-    if current_user.get("role") == "employee" and current_user.get("employee_id") != employee_id:
+    if current_user.get("role") not in ["hr", "ceo"] and current_user.get("employee_id") != employee_id:
         raise HTTPException(status_code=403, detail="Not authorized to view other employees' reports")
 
     if employee_id == "EMP-7777":

@@ -20,14 +20,14 @@ const Sidebar = () => {
 
   const menuItems = [
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, roles: ['admin', 'hr', 'employee'] },
-    { path: '/employees', label: 'الموظفين', icon: Users, roles: ['admin', 'hr'] },
-    { path: '/attendance', label: 'سجل الحضور', icon: CalendarCheck, roles: ['admin', 'hr', 'employee'] },
-    { path: '/leaves', label: 'الإجازات والأذونات', icon: Calendar, roles: ['admin', 'hr', 'employee'] },
-    { path: '/loans', label: 'السلف والقروض', icon: Coins, roles: ['admin', 'hr', 'employee'] },
+    { path: '/employees', label: 'الموظفين', icon: Users, roles: ['hr'] },
+    { path: '/attendance', label: 'سجل الحضور', icon: CalendarCheck, roles: ['hr', 'employee'] },
+    { path: '/leaves', label: 'الإجازات والأذونات', icon: Calendar, roles: ['hr', 'employee'] },
+    { path: '/loans', label: 'السلف والقروض', icon: Coins, roles: ['hr', 'employee'] },
     { path: '/payroll', label: 'الرواتب والـ Payslips', icon: Wallet, roles: ['admin', 'hr', 'employee'] },
-    { path: '/assets', label: 'العهد والأصول', icon: Package, roles: ['admin', 'hr'] },
-    { path: '/departments', label: 'الأقسام الإدارية', icon: Building2, roles: ['admin', 'hr'] },
-    { path: '/reports', label: 'التقارير', icon: BarChart3, roles: ['admin', 'hr', 'employee'] },
+    { path: '/assets', label: 'العهد والأصول', icon: Package, roles: ['admin'] },
+    { path: '/departments', label: 'الأقسام الإدارية', icon: Building2, roles: ['hr'] },
+    { path: '/reports', label: 'التقارير', icon: BarChart3, roles: ['hr', 'employee'] },
     { path: '/settings', label: 'الإعدادات', icon: Settings, roles: ['admin', 'hr', 'employee'] },
   ];
 

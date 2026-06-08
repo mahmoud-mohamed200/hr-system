@@ -172,7 +172,7 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
 @router.get("/calculate")
 def calculate_monthly_payroll(
     month: str,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("admin")),
 ):
     """Calculate and preview payroll details for a specific month YYYY-MM. Admin/HR only."""
     if not month or len(month) != 7:
@@ -207,7 +207,7 @@ def calculate_monthly_payroll(
 @router.post("/approve")
 def approve_monthly_payroll(
     month: str,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("admin")),
 ):
     """Approve and lock payroll for a specific month, generating secure payslips. Admin/HR only."""
     if not month or len(month) != 7:
@@ -261,8 +261,8 @@ def list_employee_payslips(
     """List approved payslips for the current employee."""
     query = {"status": "approved"}
     
-    # Restrict to own payslips unless Admin/HR
-    if current_user["role"] not in ["admin", "hr"]:
+    # Restrict to own payslips unless Admin/CEO
+    if current_user["role"] not in ["admin", "ceo"]:
         query["employee_id"] = current_user["employee_id"]
         
     if month:
@@ -307,7 +307,7 @@ def decrypt_payslip(
         raise HTTPException(status_code=404, detail="مفردات المرتب غير موجودة")
         
     # Check authorization
-    if current_user["role"] not in ["admin", "hr"] and payroll["employee_id"] != current_user["employee_id"]:
+    if current_user["role"] not in ["admin", "ceo"] and payroll["employee_id"] != current_user["employee_id"]:
         raise HTTPException(status_code=403, detail="غير مصرح لك بمشاهدة هذه المفردات")
 
     # Verify user's password

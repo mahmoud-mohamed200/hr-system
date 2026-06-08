@@ -62,7 +62,7 @@ def _employee_to_response(emp: dict) -> EmployeeResponse:
 
 
 @router.get("/alerts")
-def get_contract_alerts(current_user: dict = Depends(require_role("admin", "hr"))):
+def get_contract_alerts(current_user: dict = Depends(require_role("hr"))):
     """List employees whose contract expires in less than 30 days. Admin/HR only."""
     from datetime import datetime
     now_dt = datetime.now()
@@ -97,7 +97,7 @@ def list_employees(
     current_user: dict = Depends(get_current_user),
 ):
     """List employees with pagination, search, and filters."""
-    if current_user.get("role") not in ["admin", "hr", "ceo"]:
+    if current_user.get("role") not in ["hr", "ceo"]:
         raise HTTPException(status_code=403, detail="غير مصرح لك باستعراض قائمة الموظفين")
     query = {}
     if search:
@@ -128,7 +128,7 @@ def get_employee(
     current_user: dict = Depends(get_current_user),
 ):
     """Get a single employee by employee_id or MongoDB _id."""
-    if current_user.get("role") not in ["admin", "hr", "ceo"] and current_user.get("employee_id") != employee_id:
+    if current_user.get("role") not in ["hr", "ceo"] and current_user.get("employee_id") != employee_id:
         raise HTTPException(status_code=403, detail="غير مصرح لك باستعراض بيانات هذا الموظف")
     emp = employees_col().find_one({"employee_id": employee_id})
     if not emp:
@@ -145,7 +145,7 @@ def get_employee(
 @router.post("", response_model=EmployeeResponse)
 def create_employee(
     employee: EmployeeCreate,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Create a new employee and optionally a login account."""
     # Check email uniqueness
@@ -201,7 +201,7 @@ def create_employee(
 def update_employee(
     employee_id: str,
     updates: EmployeeUpdate,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Update an employee's information."""
     emp = employees_col().find_one({"employee_id": employee_id})
@@ -253,7 +253,7 @@ def update_employee(
 @router.delete("/{employee_id}")
 def delete_employee(
     employee_id: str,
-    current_user: dict = Depends(require_role("admin")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Delete an employee and their login account. Admin only."""
     emp = employees_col().find_one({"employee_id": employee_id})
@@ -326,7 +326,7 @@ async def upload_document(
     name: str = Form(...),
     doc_type: str = Form(...),
     file: UploadFile = File(...),
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Upload scanner hiring documents to employee profile. Admin/HR only."""
     emp = employees_col().find_one({"employee_id": employee_id})
@@ -365,7 +365,7 @@ async def upload_document(
 def add_career_path(
     employee_id: str,
     data: CareerPathItem,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Log career progression / promotion. Admin/HR only."""
     emp = employees_col().find_one({"employee_id": employee_id})
@@ -393,7 +393,7 @@ def add_career_path(
 def add_penalty(
     employee_id: str,
     data: PenaltyItem,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Log administrative penalties (forces payroll deduction). Admin/HR only."""
     emp = employees_col().find_one({"employee_id": employee_id})
@@ -421,7 +421,7 @@ def add_penalty(
 async def upload_photo(
     employee_id: str,
     photo: UploadFile = File(...),
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Upload a profile photo for an employee."""
     emp = employees_col().find_one({"employee_id": employee_id})
@@ -449,7 +449,7 @@ async def upload_photo(
 async def upload_face_photos(
     employee_id: str,
     photos: List[UploadFile] = File(...),
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Upload face recognition photos for an employee."""
     emp = employees_col().find_one({"employee_id": employee_id})

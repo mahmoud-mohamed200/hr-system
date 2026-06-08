@@ -52,7 +52,7 @@ def get_department(
 @router.post("", response_model=DepartmentResponse, status_code=status.HTTP_201_CREATED)
 def create_department(
     department: DepartmentCreate,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Create a new department."""
     if departments_col().find_one({"name": department.name}):
@@ -75,7 +75,7 @@ def create_department(
 def update_department(
     id_or_name: str,
     updates: DepartmentUpdate,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Update a department."""
     dept = departments_col().find_one({"name": id_or_name})
@@ -109,7 +109,7 @@ def update_department(
 @router.delete("/{id}")
 def delete_department(
     id: str,
-    current_user: dict = Depends(require_role("admin")),
+    current_user: dict = Depends(require_role("hr")),
 ):
     """Delete a department. Only allowed if it has 0 employees."""
     try:

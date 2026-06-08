@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const PayrollPage = () => {
   const { user } = useAuth();
-  const isAdminOrHr = ['admin', 'hr'].includes(user?.role);
+  const isAdminOrCeo = ['admin', 'ceo'].includes(user?.role);
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().split('T')[0].substring(0, 7)); // YYYY-MM
   const [payrollState, setPayrollState] = useState('draft'); // 'draft' or 'approved'
@@ -77,7 +77,7 @@ const PayrollPage = () => {
   };
 
   useEffect(() => {
-    if (!isAdminOrHr) {
+    if (!isAdminOrCeo) {
       fetchEmployeePayslips();
     } else {
       handleCalculatePayroll();
@@ -93,7 +93,7 @@ const PayrollPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Header title="مسير الرواتب ومفردات المرتب (Payslips)" />
         
-        {isAdminOrHr && (
+        {isAdminOrCeo && (
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <input 
               type="month" 
@@ -150,8 +150,8 @@ const PayrollPage = () => {
         )}
       </div>
 
-      {isAdminOrHr ? (
-        /* ADMIN/HR PAYROLL SHEET VIEW */
+      {isAdminOrCeo ? (
+        /* ADMIN/CEO PAYROLL SHEET VIEW */
         <div className="card" style={{ padding: 0 }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)' }}>

@@ -88,8 +88,8 @@ def request_loan(
 def list_loans(
     current_user: dict = Depends(get_current_user),
 ):
-    """List loan requests. Employees see theirs; Admin/HR see all."""
-    if current_user["role"] in ["admin", "hr"]:
+    """List loan requests. Employees see theirs; HR/CEO see all."""
+    if current_user["role"] in ["hr", "ceo"]:
         cursor = loans_col().find().sort("created_at", -1)
     else:
         cursor = loans_col().find({"employee_id": current_user["employee_id"]}).sort("created_at", -1)
@@ -101,9 +101,9 @@ def list_loans(
 def update_loan_status(
     loan_id: str,
     data: LoanUpdateStatus,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("hr")),
 ):
-    """Approve or reject a loan request. Generates monthly schedule if approved."""
+    """Approve or reject a loan request. Generates monthly schedule if approved. HR only."""
     try:
         oid = ObjectId(loan_id)
     except Exception:
