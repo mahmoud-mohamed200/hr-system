@@ -17,7 +17,8 @@ const AssetsPage = () => {
   const [createForm, setCreateForm] = useState({
     name: '',
     serial_number: '',
-    type: 'laptop'
+    type: 'laptop',
+    employee_id: ''
   });
 
   const [assignForm, setAssignForm] = useState({
@@ -51,7 +52,7 @@ const AssetsPage = () => {
       await client.post('/assets', createForm);
       toast.success('تمت إضافة الأصل بنجاح');
       setCreateModalOpen(false);
-      setCreateForm({ name: '', serial_number: '', type: 'laptop' });
+      setCreateForm({ name: '', serial_number: '', type: 'laptop', employee_id: '' });
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'فشلت إضافة الأصل');
@@ -307,6 +308,22 @@ const AssetsPage = () => {
                   placeholder="مثال: C02X1234H0D2"
                   className="modal-input" 
                 />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label className="input-label">تسليم العهدة لموظف (اختياري)</label>
+                <select 
+                  value={createForm.employee_id} 
+                  onChange={(e) => setCreateForm(p => ({ ...p, employee_id: e.target.value }))}
+                  className="modal-input"
+                  style={{ direction: 'rtl' }}
+                >
+                  <option value="">لا توجد عهدة حالياً (متوفر بالمخزن)</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>
+                      {emp.name} ({emp.employee_id})
+                    </option>
+                  ))}
+                </select>
               </div>
               <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
                 حفظ وإضافة الأصل

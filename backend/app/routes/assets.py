@@ -30,7 +30,7 @@ def list_assets(
     current_user: dict = Depends(get_current_user),
 ):
     """List all assets. Employees see only assets assigned to them, HR/Admin see all."""
-    if current_user["role"] in ["admin", "hr"]:
+    if current_user["role"] in ["admin", "hr", "ceo"]:
         cursor = assets_col().find().sort("name", 1)
     else:
         cursor = assets_col().find({"employee_id": current_user["employee_id"]})
@@ -48,14 +48,26 @@ def create_asset(
     if assets_col().find_one({"serial_number": data.serial_number}):
         raise HTTPException(status_code=400, detail="الرقم التسلسلي للأصل مسجل بالفعل")
 
+    emp_name = None
+    status_val = "available"
+    assigned_date = None
+    
+    if data.employee_id:
+        emp = employees_col().find_one({"employee_id": data.employee_id})
+        if not emp:
+            raise HTTPException(status_code=404, detail="الموظف المختار غير موجود")
+        emp_name = emp["name"]
+        status_val = "assigned"
+        assigned_date = datetime.now(timezone.utc).isoformat()[:10]
+
     doc = {
         "name": data.name,
         "serial_number": data.serial_number,
         "type": data.type,
-        "employee_id": None,
-        "employee_name": None,
-        "status": "available",
-        "assigned_date": None
+        "employee_id": data.employee_id,
+        "employee_name": emp_name,
+        "status": status_val,
+        "assigned_date": assigned_date
     }
     
     result = assets_col().insert_one(doc)

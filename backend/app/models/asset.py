@@ -16,6 +16,7 @@ class AssetCreate(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     serial_number: str = Field(min_length=2, max_length=50)
     type: str = Field(description="laptop | car | phone | other")
+    employee_id: Optional[str] = None
 
 
 class AssetAssign(BaseModel):
