@@ -4,13 +4,14 @@
 import random
 import time
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Request, BackgroundTasks
 import os
 from app.config import settings
 from pydantic import BaseModel
 from app.database import users_col, employees_col, otp_col
 from app.auth import hash_password, verify_password, create_access_token, get_current_user, require_role
 from app.models.user import UserLogin, UserCreate, UserResponse, TokenResponse
+from app.services.email import send_2fa_email
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -26,7 +27,7 @@ MAX_ATTEMPTS = 5
 LOCKOUT_TIME = 60 * 5  # 5 minutes
 
 @router.post("/login")
-def login(request: Request, credentials: UserLogin):
+def login(request: Request, credentials: UserLogin, background_tasks: BackgroundTasks):
     """Authenticate user and return JWT token or request 2FA OTP."""
     ip = request.client.host
     now = time.time()
@@ -81,9 +82,9 @@ def login(request: Request, credentials: UserLogin):
             "code": code,
             "created_at": datetime.now(timezone.utc)
         })
-        # Simulate sending email
-        print(f"\n📩 [EMAIL SIMULATION] Sending OTP to {credentials.email}...")
-        print(f"🔥 [2FA OTP CODE] Your login code is: {code}\n")
+        # Schedule sending email in background
+        background_tasks.add_task(send_2fa_email, credentials.email, code)
+        
         return {
             "status": "2fa_required",
             "email": credentials.email

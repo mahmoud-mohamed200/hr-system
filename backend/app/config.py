@@ -43,6 +43,12 @@ class Settings:
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     FACES_DIR: str = os.getenv("FACES_DIR", "faces")
 
+    # Email / SMTP (Gmail by default)
+    SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+
     def __init__(self):
         # Build camera config from env
         cam_count = int(os.getenv("CAM_COUNT", "3"))
