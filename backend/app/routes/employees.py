@@ -97,6 +97,8 @@ def list_employees(
     current_user: dict = Depends(get_current_user),
 ):
     """List employees with pagination, search, and filters."""
+    if current_user.get("role") not in ["admin", "hr", "ceo"]:
+        raise HTTPException(status_code=403, detail="غير مصرح لك باستعراض قائمة الموظفين")
     query = {}
     if search:
         query["$or"] = [
@@ -126,6 +128,8 @@ def get_employee(
     current_user: dict = Depends(get_current_user),
 ):
     """Get a single employee by employee_id or MongoDB _id."""
+    if current_user.get("role") not in ["admin", "hr", "ceo"] and current_user.get("employee_id") != employee_id:
+        raise HTTPException(status_code=403, detail="غير مصرح لك باستعراض بيانات هذا الموظف")
     emp = employees_col().find_one({"employee_id": employee_id})
     if not emp:
         # Try by _id

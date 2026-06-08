@@ -57,12 +57,17 @@ const AttendancePage = () => {
 
   const fetchFilterData = async () => {
     try {
-      const [deptRes, empRes] = await Promise.all([
-        client.get('/departments'),
-        client.get('/employees?per_page=100')
-      ]);
-      setDepartments(deptRes.data.departments);
-      setEmployees(empRes.data.employees);
+      if (isAdminOrHr || isCeo) {
+        const [deptRes, empRes] = await Promise.all([
+          client.get('/departments'),
+          client.get('/employees?per_page=100')
+        ]);
+        setDepartments(deptRes.data.departments);
+        setEmployees(empRes.data.employees);
+      } else {
+        const deptRes = await client.get('/departments');
+        setDepartments(deptRes.data.departments);
+      }
     } catch (err) {
       console.error('Error fetching filters data:', err);
     }
@@ -338,86 +343,109 @@ const AttendancePage = () => {
 
       {/* Filter Bar */}
       <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem', padding: '1rem', alignItems: 'center' }}>
-        <div style={{ gridColumn: 'span 4', position: 'relative' }}>
-          <Search size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-          <input
-            type="text"
-            placeholder="بحث باسم الموظف أو الكود..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              background: 'rgba(0, 39, 73, 0.02)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '8px',
-              padding: '0.6rem 2.5rem 0.6rem 1rem',
-              color: 'var(--text-main)',
-              outline: 'none',
-              textAlign: 'right'
-            }}
-          />
-        </div>
+        {(isAdminOrHr || isCeo) ? (
+          <>
+            <div style={{ gridColumn: 'span 4', position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+              <input
+                type="text"
+                placeholder="بحث باسم الموظف أو الكود..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(0, 39, 73, 0.02)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '8px',
+                  padding: '0.6rem 2.5rem 0.6rem 1rem',
+                  color: 'var(--text-main)',
+                  outline: 'none',
+                  textAlign: 'right'
+                }}
+              />
+            </div>
 
-        <div style={{ gridColumn: 'span 3', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <CalendarIcon size={16} color="var(--text-dim)" />
-          <input 
-            type="date" 
-            value={date} 
-            onChange={(e) => setDate(e.target.value)}
-            style={{
-              width: '100%',
-              background: 'rgba(0, 39, 73, 0.02)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '8px',
-              padding: '0.6rem 1rem',
-              color: 'var(--text-main)',
-              outline: 'none',
-              textAlign: 'right'
-            }}
-          />
-        </div>
+            <div style={{ gridColumn: 'span 3', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <CalendarIcon size={16} color="var(--text-dim)" />
+              <input 
+                type="date" 
+                value={date} 
+                onChange={(e) => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(0, 39, 73, 0.02)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '8px',
+                  padding: '0.6rem 1rem',
+                  color: 'var(--text-main)',
+                  outline: 'none',
+                  textAlign: 'right'
+                }}
+              />
+            </div>
 
-        <select
-          value={selectedDept}
-          onChange={(e) => setSelectedDept(e.target.value)}
-          style={{
-            gridColumn: 'span 3',
-            background: 'rgba(0, 39, 73, 0.02)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '8px',
-            padding: '0.6rem 1rem',
-            color: 'var(--text-main)',
-            outline: 'none',
-            direction: 'rtl'
-          }}
-        >
-          <option value="">جميع الأقسام</option>
-          {departments.map(d => (
-            <option key={d.id} value={d.name} style={{ background: 'var(--bg-card)' }}>{d.name}</option>
-          ))}
-        </select>
+            <select
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+              style={{
+                gridColumn: 'span 3',
+                background: 'rgba(0, 39, 73, 0.02)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '8px',
+                padding: '0.6rem 1rem',
+                color: 'var(--text-main)',
+                outline: 'none',
+                direction: 'rtl'
+              }}
+            >
+              <option value="">جميع الأقسام</option>
+              {departments.map(d => (
+                <option key={d.id} value={d.name} style={{ background: 'var(--bg-card)' }}>{d.name}</option>
+              ))}
+            </select>
 
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          style={{
-            gridColumn: 'span 2',
-            background: 'rgba(0, 39, 73, 0.02)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '8px',
-            padding: '0.6rem 1rem',
-            color: 'var(--text-main)',
-            outline: 'none',
-            direction: 'rtl'
-          }}
-        >
-          <option value="">جميع الحالات</option>
-          <option value="on_time">حاضر في الموعد</option>
-          <option value="late">متأخر</option>
-          <option value="absent">غياب</option>
-          <option value="leave">إجازة</option>
-          <option value="mission">مأمورية</option>
-        </select>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              style={{
+                gridColumn: 'span 2',
+                background: 'rgba(0, 39, 73, 0.02)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '8px',
+                padding: '0.6rem 1rem',
+                color: 'var(--text-main)',
+                outline: 'none',
+                direction: 'rtl'
+              }}
+            >
+              <option value="">جميع الحالات</option>
+              <option value="on_time">حاضر في الموعد</option>
+              <option value="late">متأخر</option>
+              <option value="absent">غياب</option>
+              <option value="leave">إجازة</option>
+              <option value="mission">مأمورية</option>
+            </select>
+          </>
+        ) : (
+          <div style={{ gridColumn: 'span 12', display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center' }}>
+            <CalendarIcon size={16} color="var(--text-dim)" />
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginLeft: '0.5rem' }}>تاريخ عرض الحركات:</span>
+            <input 
+              type="date" 
+              value={date} 
+              onChange={(e) => setDate(e.target.value)}
+              style={{
+                background: 'rgba(0, 39, 73, 0.02)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '8px',
+                padding: '0.6rem 1rem',
+                color: 'var(--text-main)',
+                outline: 'none',
+                textAlign: 'right'
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Logs Table */}

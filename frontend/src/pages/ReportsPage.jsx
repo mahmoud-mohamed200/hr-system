@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import client from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { 
   BarChart, 
   Bar, 
@@ -22,6 +23,9 @@ import {
 } from 'lucide-react';
 
 const ReportsPage = () => {
+  const { user } = useAuth();
+  const isAdminOrHr = ['admin', 'hr'].includes(user?.role);
+  const isCeo = user?.role === 'ceo';
   const [employees, setEmployees] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7)); // YYYY-MM
   const [selectedEmpId, setSelectedEmpId] = useState('');
@@ -47,6 +51,7 @@ const ReportsPage = () => {
   }, []);
 
   const fetchEmployees = async () => {
+    if (!isAdminOrHr && !isCeo) return;
     try {
       const res = await client.get('/employees?per_page=100');
       setEmployees(res.data.employees);
@@ -85,7 +90,13 @@ const ReportsPage = () => {
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [isAdminOrHr, isCeo]);
+
+  useEffect(() => {
+    if (!isAdminOrHr && !isCeo && user?.employee_id) {
+      setSelectedEmpId(user.employee_id);
+    }
+  }, [user, isAdminOrHr, isCeo]);
 
   useEffect(() => {
     if (selectedEmpId) {
@@ -126,29 +137,33 @@ const ReportsPage = () => {
           ))}
         </select>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem' }}>
-          <User size={16} color="var(--text-dim)" />
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>تصفية الموظف:</span>
-        </div>
-        <select
-          value={selectedEmpId}
-          onChange={(e) => setSelectedEmpId(e.target.value)}
-          style={{
-            background: 'rgba(0, 39, 73, 0.02)',
-            border: '1px solid var(--glass-border)',
-            borderRadius: '8px',
-            padding: '0.6rem 1rem',
-            color: 'var(--text-main)',
-            outline: 'none',
-            minWidth: '220px',
-            direction: 'rtl'
-          }}
-        >
-          <option value="">ملخص أداء الشركة بالكامل</option>
-          {employees.map(emp => (
-            <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>{emp.name} ({emp.employee_id})</option>
-          ))}
-        </select>
+        {(isAdminOrHr || isCeo) && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem' }}>
+              <User size={16} color="var(--text-dim)" />
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>تصفية الموظف:</span>
+            </div>
+            <select
+              value={selectedEmpId}
+              onChange={(e) => setSelectedEmpId(e.target.value)}
+              style={{
+                background: 'rgba(0, 39, 73, 0.02)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '8px',
+                padding: '0.6rem 1rem',
+                color: 'var(--text-main)',
+                outline: 'none',
+                minWidth: '220px',
+                direction: 'rtl'
+              }}
+            >
+              <option value="">ملخص أداء الشركة بالكامل</option>
+              {employees.map(emp => (
+                <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>{emp.name} ({emp.employee_id})</option>
+              ))}
+            </select>
+          </>
+        )}
       </div>
 
       {loading ? (

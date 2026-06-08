@@ -113,12 +113,15 @@ def list_attendance(
     query = {}
     if date:
         query["date"] = date
-    if employee_id:
-        query["employee_id"] = employee_id
+    if current_user.get("role") not in ["admin", "hr", "ceo"]:
+        query["employee_id"] = current_user.get("employee_id")
     else:
-        query["employee_id"] = {"$ne": "EMP-7777"}
-    if department:
-        query["department"] = department
+        if employee_id:
+            query["employee_id"] = employee_id
+        else:
+            query["employee_id"] = {"$ne": "EMP-7777"}
+        if department:
+            query["department"] = department
     if status_filter:
         query["status"] = status_filter
 
