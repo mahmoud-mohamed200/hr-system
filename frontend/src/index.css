@@ -1,37 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Premium Indigo Palette */
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-dark: #3730a3;
-  --primary-light: #e0e7ff;
+  /* Tech DNA Blue/Cyan Palette */
+  --primary: #00b0f0;
+  --primary-hover: #008ebf;
+  --primary-dark: #005c7a;
+  --primary-light: rgba(0, 176, 240, 0.15);
   
   /* Accents */
-  --accent: #10b981; /* Emerald Green for success/attendance */
-  --accent-light: #d1fae5;
-  --danger: #ef4444; /* Rose Red for absence/late */
-  --danger-light: #fee2e2;
+  --accent: #10b981;
+  --accent-light: rgba(16, 185, 129, 0.15);
+  --danger: #ef4444;
+  --danger-light: rgba(239, 68, 68, 0.15);
   --warning: #f59e0b;
-  --warning-light: #fef3c7;
+  --warning-light: rgba(245, 158, 11, 0.15);
 
   /* Neutrals & Backgrounds */
-  --bg-dark: #f8fafc; /* Very soft slate */
-  --bg-card: #ffffff;
+  --bg-dark: rgba(2, 11, 38, 0.6);
+  --bg-card: rgba(4, 15, 38, 0.75);
   
   /* Typography Colors */
-  --text-main: #0f172a; /* Slate 900 for high contrast headers */
-  --text-dim: #64748b;  /* Slate 500 for secondary text */
+  --text-main: #f8fafc;
+  --text-dim: #94a3b8;
   
   /* Borders and Glass */
-  --glass: rgba(79, 70, 229, 0.04);
-  --glass-border: #e2e8f0;
+  --glass: rgba(0, 176, 240, 0.05);
+  --glass-border: rgba(0, 176, 240, 0.25);
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-  --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 15px 25px rgba(0, 0, 0, 0.5);
+  --shadow-hover: 0 20px 30px rgba(0, 176, 240, 0.15);
 }
 
 * {
@@ -42,7 +42,11 @@
 
 body {
   font-family: 'Cairo', 'Inter', sans-serif;
-  background-color: var(--bg-dark);
+  background-color: #020b26;
+  background-image: url('/bg-pattern.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -59,6 +63,8 @@ body {
 .sidebar {
   width: 280px;
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid var(--glass-border);
   padding: 2.5rem 1.5rem;
   display: flex;
@@ -78,7 +84,7 @@ body {
 .logo-icon {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #6366f1, #4338ca);
+  background: linear-gradient(135deg, #00b0f0, #005c7a);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -86,7 +92,7 @@ body {
   font-weight: 800;
   color: #ffffff;
   font-size: 1.4rem;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 176, 240, 0.3);
 }
 
 .logo-text {
@@ -186,6 +192,8 @@ body {
 
 .card {
   background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 1.75rem;
@@ -307,7 +315,9 @@ input, select, textarea {
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
   color: var(--text-main);
-  background: var(--bg-card);
+  background: rgba(2, 11, 38, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: all 0.2s ease;
   width: 100%;
 }

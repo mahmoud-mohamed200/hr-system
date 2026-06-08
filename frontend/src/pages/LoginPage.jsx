@@ -62,7 +62,7 @@ const LoginPage = () => {
       alignItems: 'center',
       minHeight: '100vh',
       width: '100vw',
-      background: 'radial-gradient(circle at 10% 20%, #f4f6f9 0%, #e2e8f0 90%)',
+      background: 'transparent',
       overflow: 'hidden',
       position: 'relative',
       direction: 'rtl'
@@ -72,7 +72,7 @@ const LoginPage = () => {
         position: 'absolute',
         width: '300px',
         height: '300px',
-        background: 'radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, rgba(0,0,0,0) 70%)',
+        background: 'radial-gradient(circle, rgba(0, 176, 240, 0.1) 0%, rgba(0,0,0,0) 70%)',
         top: '-10%',
         right: '-5%',
         borderRadius: '50%',
@@ -82,7 +82,7 @@ const LoginPage = () => {
         position: 'absolute',
         width: '400px',
         height: '400px',
-        background: 'radial-gradient(circle, rgba(0,39,73,0.05) 0%, rgba(0,0,0,0) 70%)',
+        background: 'radial-gradient(circle, rgba(0, 176, 240, 0.05) 0%, rgba(0,0,0,0) 70%)',
         bottom: '-10%',
         left: '-5%',
         borderRadius: '50%',
@@ -91,7 +91,7 @@ const LoginPage = () => {
 
       <div className="login-card" style={{
         width: '420px',
-        background: 'rgba(255, 255, 255, 0.85)',
+        background: 'var(--bg-card)',
         backdropFilter: 'blur(20px)',
         border: '1px solid var(--glass-border)',
         borderRadius: '24px',
