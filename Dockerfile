@@ -40,5 +40,5 @@ EXPOSE 8000
 ENV PORT=8000
 ENV PYTHONUNBUFFERED=1
 
-# Run the backend using uvicorn on port 8000 directly (matches Back4App port setting and allows PID 1 signal forwarding)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the backend using uvicorn (reads dynamic PORT assigned by the cloud provider, replaces shell with exec to keep PID 1)
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
