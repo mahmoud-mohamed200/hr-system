@@ -43,5 +43,5 @@ ENV PYTHONUNBUFFERED=1
 # Ensure Docker sends SIGINT for fast graceful shutdown (Uvicorn responds immediately to SIGINT)
 STOPSIGNAL SIGINT
 
-# Run the backend using uvicorn (reads dynamic PORT, exec replaces shell as PID 1, timeout-keep-alive 0 prevents shutdown delay)
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 0"]
+# Run the backend using uvicorn (reads dynamic PORT, exec replaces shell as PID 1)
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
