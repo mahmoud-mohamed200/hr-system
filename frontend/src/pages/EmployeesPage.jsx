@@ -457,8 +457,8 @@ const EmployeesPage = () => {
                           <Edit2 size={14} />
                         </button>
                       )}
-                      {/* Never allow deletion of the CEO */}
-                      {!(emp.employee_id === 'EMP-7777' || emp.job_title === 'الرئيس التنفيذي') && (
+                      {/* Never allow deletion of the CEO, and restrict deletion to admin only */}
+                      {!(emp.employee_id === 'EMP-7777' || emp.job_title === 'الرئيس التنفيذي') && user?.role === 'admin' && (
                         <button 
                           onClick={() => handleDelete(emp.employee_id)}
                           title="حذف الملف"
@@ -592,22 +592,24 @@ const EmployeesPage = () => {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  style={{
-                    background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.8rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    marginTop: '1rem',
-                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-                  }}
-                >
-                  {isEdit ? 'حفظ التعديلات الحالية' : 'إنشاء ملف الموظف'}
-                </button>
+                {user?.role !== 'ceo' && (
+                  <button
+                    type="submit"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.8rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      marginTop: '1rem',
+                      boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                    }}
+                  >
+                    {isEdit ? 'حفظ التعديلات الحالية' : 'إنشاء ملف الموظف'}
+                  </button>
+                )}
               </form>
             )}
 

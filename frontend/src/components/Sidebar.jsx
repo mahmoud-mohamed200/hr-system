@@ -18,16 +18,23 @@ import {
 const Sidebar = () => {
   const { user, logout } = useAuth();
 
+  const roleLabels = {
+    ceo: 'الرئيس التنفيذي',
+    admin: 'مدير النظام',
+    hr: 'الموارد البشرية',
+    employee: 'موظف'
+  };
+
   const menuItems = [
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, roles: ['admin', 'hr', 'employee'] },
     { path: '/employees', label: 'الموظفين', icon: Users, roles: ['admin', 'hr'] },
     { path: '/attendance', label: 'سجل الحضور', icon: CalendarCheck, roles: ['admin', 'hr', 'employee'] },
     { path: '/leaves', label: 'الإجازات والأذونات', icon: Calendar, roles: ['admin', 'hr', 'employee'] },
     { path: '/loans', label: 'السلف والقروض', icon: Coins, roles: ['admin', 'hr', 'employee'] },
-    { path: '/payroll', label: 'الرواتب والـ Payslips', icon: Wallet, roles: ['admin', 'hr', 'employee'] },
+    { path: '/payroll', label: 'الرواتب', icon: Wallet, roles: ['admin', 'hr', 'employee'] },
     { path: '/assets', label: 'العهد والأصول', icon: Package, roles: ['admin', 'hr'] },
     { path: '/departments', label: 'الأقسام الإدارية', icon: Building2, roles: ['admin', 'hr'] },
-    { path: '/reports', label: 'التقارير', icon: BarChart3, roles: ['admin', 'hr', 'employee'] },
+    { path: '/reports', label: 'التقارير', icon: BarChart3, roles: ['admin', 'hr'] },
     { path: '/settings', label: 'الإعدادات', icon: Settings, roles: ['admin', 'hr', 'employee'] },
   ];
 
@@ -68,9 +75,10 @@ const Sidebar = () => {
         <div style={{ padding: '0.75rem 1rem', background: 'rgba(0, 39, 73, 0.02)', borderRadius: '12px', border: '1px solid var(--glass-border)', textAlign: 'right' }}>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>تم الدخول بصلاحية</p>
           <p style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {user?.name || user?.job_title || user?.role}
+            {roleLabels[user?.role] || user?.role}
           </p>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: '500' }}>{user?.name || ''}</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</p>
         </div>
 
         <button 

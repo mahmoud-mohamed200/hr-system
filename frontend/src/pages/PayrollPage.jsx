@@ -129,7 +129,7 @@ const PayrollPage = () => {
               <span>عرض الحسابات</span>
             </button>
             
-            {payrollState === 'draft' && payrollRecords.length > 0 && (
+            {payrollState === 'draft' && payrollRecords.length > 0 && user?.role !== 'hr' && (
               <button 
                 onClick={handleApprovePayroll}
                 style={{

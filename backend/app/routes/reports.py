@@ -16,7 +16,7 @@ def get_daily_report(
     date: Optional[str] = Query(None),
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    """Generate daily attendance report."""
+    """Generate daily attendance report. Admin/HR/CEO only."""
     if not date:
         date = datetime.now().strftime("%Y-%m-%d")
 
@@ -65,7 +65,7 @@ def get_weekly_report(
     start_date: Optional[str] = Query(None),
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    """Generate weekly attendance report."""
+    """Generate weekly attendance report. Admin/HR/CEO only."""
     if not start_date:
         # Default to 7 days ago
         start = datetime.now() - timedelta(days=6)
@@ -107,7 +107,7 @@ def get_monthly_report(
     month: Optional[str] = Query(None), # Format YYYY-MM
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    """Generate monthly attendance report."""
+    """Generate monthly attendance report. Admin/HR/CEO only."""
     if not month:
         month = datetime.now().strftime("%Y-%m")
 

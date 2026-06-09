@@ -183,6 +183,26 @@ def register(
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
     """Create a new user account. Requires admin or HR role."""
+    # Role hierarchy enforcement
+    target_role = user_data.role.value
+
+    # Nobody can create a CEO account via API
+    if target_role == "ceo":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="غير مسموح بإنشاء حساب رئيس تنفيذي من خلال النظام",
+        )
+
+    # HR can only create 'employee' accounts
+    if current_user["role"] == "hr" and target_role not in ["employee"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="صلاحيات الـ HR تسمح فقط بإنشاء حسابات موظفين عاديين",
+        )
+
+    # Admin can create employee, hr, and admin accounts (but not ceo)
+    # CEO bypass is handled by require_role already
+
     if users_col().find_one({"email": user_data.email}):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -192,7 +212,7 @@ def register(
     new_user = {
         "email": user_data.email,
         "password_hash": hash_password(user_data.password),
-        "role": user_data.role.value,
+        "role": target_role,
         "employee_id": user_data.employee_id,
     }
 

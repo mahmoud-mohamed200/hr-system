@@ -207,9 +207,9 @@ def calculate_monthly_payroll(
 @router.post("/approve")
 def approve_monthly_payroll(
     month: str,
-    current_user: dict = Depends(require_role("admin", "hr")),
+    current_user: dict = Depends(require_role("admin")),
 ):
-    """Approve and lock payroll for a specific month, generating secure payslips. Admin/HR only."""
+    """Approve and lock payroll for a specific month, generating secure payslips. Admin/CEO only."""
     if not month or len(month) != 7:
         raise HTTPException(status_code=400, detail="صيغة الشهر غير صحيحة")
 

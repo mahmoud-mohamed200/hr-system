@@ -47,7 +47,7 @@ def update_system_settings(
     data: SettingsUpdate,
     current_user: dict = Depends(require_role("admin")),
 ):
-    """Update global system settings. Admin only."""
+    """Update global system settings. Admin/CEO only."""
     update_data = {
         "company_name": data.company_name,
         "work_start": data.work_start,
