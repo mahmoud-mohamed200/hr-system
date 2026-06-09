@@ -56,9 +56,10 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 
 @app.on_event("startup")
 def startup_db_client():
-    # Trigger client and DB connection + index creation
-    get_db()
-    logger.info("🚀 Connected to MongoDB and ensured indexes.")
+    # Defer synchronous DB connection and index creation to the first request 
+    # to prevent blocking uvicorn from opening the port, which causes healthcheck timeouts on cloud deployments.
+    # get_db()
+    logger.info("🚀 App starting up (DB connection deferred to first request).")
 
 
 @app.on_event("shutdown")
@@ -88,13 +89,17 @@ ASSETS_DIR = os.path.join(STATIC_DIR, "assets")
 if os.path.exists(ASSETS_DIR):
     app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="frontend_assets")
 
-@app.api_route("/health", methods=["GET", "HEAD", "OPTIONS"])
+from starlette.responses import Response
+
+@app.middleware("http")
+async def aggressive_health_check(request: Request, call_next):
+    if request.method in ("OPTIONS", "HEAD") and request.url.path in ("/", "/health"):
+        return Response(status_code=200)
+    return await call_next(request)
+
+@app.api_route("/health", methods=["GET"])
 async def health_check(request: Request):
     return JSONResponse(status_code=200, content={"status": "ok", "service": "hr-attendance-backend"})
-
-@app.api_route("/", methods=["HEAD", "OPTIONS"])
-async def root_health_check(request: Request):
-    return JSONResponse(status_code=200, content={"status": "ok"})
 
 # SPA Catch-all for React Router
 @app.api_route("/{full_path:path}", methods=["GET", "HEAD", "OPTIONS"])
