@@ -35,10 +35,10 @@ RUN mkdir -p static
 # Copy the compiled frontend files from Stage 1 into the backend's static folder
 COPY --from=frontend-builder /app/frontend/dist ./static
 
-# Expose port 8000 for FastAPI
-EXPOSE 8000
-ENV PORT=8000
+# Expose port 80 for FastAPI
+EXPOSE 80
+ENV PORT=80
 ENV PYTHONUNBUFFERED=1
 
 # Run the backend using uvicorn (reads dynamic PORT assigned by the cloud provider, replaces shell with exec to keep PID 1)
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-80}"]
