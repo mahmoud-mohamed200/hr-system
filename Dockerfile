@@ -38,6 +38,7 @@ COPY --from=frontend-builder /app/frontend/dist ./static
 # Expose port 8000 for FastAPI
 EXPOSE 8000
 ENV PORT=8000
+ENV PYTHONUNBUFFERED=1
 
 # Run the backend using uvicorn on port 8000 directly (matches Back4App port setting and allows PID 1 signal forwarding)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
