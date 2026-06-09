@@ -89,16 +89,10 @@ ASSETS_DIR = os.path.join(STATIC_DIR, "assets")
 if os.path.exists(ASSETS_DIR):
     app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="frontend_assets")
 
-from starlette.responses import Response
-
-@app.middleware("http")
-async def aggressive_health_check(request: Request, call_next):
-    if request.method in ("OPTIONS", "HEAD") and request.url.path in ("/", "/health"):
-        return Response(status_code=200)
-    return await call_next(request)
-
-@app.api_route("/health", methods=["GET"])
+@app.api_route("/health", methods=["GET", "HEAD", "OPTIONS"])
 async def health_check(request: Request):
+    if request.method == "OPTIONS":
+        return JSONResponse(status_code=200, content={"status": "ok"})
     return JSONResponse(status_code=200, content={"status": "ok", "service": "hr-attendance-backend"})
 
 # SPA Catch-all for React Router
