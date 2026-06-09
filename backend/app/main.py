@@ -89,8 +89,12 @@ if os.path.exists(ASSETS_DIR):
     app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="frontend_assets")
 
 # SPA Catch-all for React Router
-@app.get("/{full_path:path}")
-async def serve_spa(full_path: str):
+@app.api_route("/{full_path:path}", methods=["GET", "HEAD", "OPTIONS"])
+async def serve_spa(full_path: str, request: Request):
+    # Handle OPTIONS preflight requests for the root explicitly
+    if request.method == "OPTIONS":
+        return JSONResponse(status_code=200, content={"status": "ok"})
+
     # Do not intercept actual API endpoints (should be handled by routers)
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API endpoint not found")

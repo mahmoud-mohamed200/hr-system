@@ -39,5 +39,5 @@ COPY --from=frontend-builder /app/frontend/dist ./static
 EXPOSE 8000
 ENV PORT=8000
 
-# Run the backend using uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the backend using uvicorn (reads dynamic PORT assigned by the cloud provider)
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"

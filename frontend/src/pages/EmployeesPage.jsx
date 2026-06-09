@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import client, { BACKEND_URL } from '../api/client';
-import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Camera, 
-  X, 
-  UserPlus, 
-  Check, 
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  Camera,
+  X,
+  UserPlus,
+  Check,
   AlertCircle,
   FileText,
   Briefcase,
@@ -31,7 +31,7 @@ const EmployeesPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
-  
+
   // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -51,7 +51,7 @@ const EmployeesPage = () => {
     contract_end_date: '',
     two_factor_enabled: false
   });
-  
+
   // Nested sub-form states (Personnel digital archive)
   const [docForm, setDocForm] = useState({ name: '', type: 'national_id', file: null });
   const [careerForm, setCareerForm] = useState({ title: '', department: '', start_date: '', notes: '' });
@@ -71,7 +71,7 @@ const EmployeesPage = () => {
       let url = '/employees?per_page=100';
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (selectedDept) url += `&department=${encodeURIComponent(selectedDept)}`;
-      
+
       const res = await client.get(url);
       setEmployees(res.data.employees);
     } catch (err) {
@@ -152,7 +152,7 @@ const EmployeesPage = () => {
       contract_end_date: emp.contract_end_date || '',
       two_factor_enabled: emp.two_factor_enabled || false
     });
-    
+
     // Fetch assigned assets for exit clearance visibility
     try {
       const assetsRes = await client.get('/assets');
@@ -205,7 +205,7 @@ const EmployeesPage = () => {
       toast.error('يرجى اختيار ملف وكتابة اسم المستند');
       return;
     }
-    
+
     const form = new FormData();
     form.append('name', docForm.name);
     form.append('doc_type', docForm.type);
@@ -284,7 +284,7 @@ const EmployeesPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', direction: 'rtl' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Header title="ملفات شؤون الموظفين والأرشيف الرقمي" />
-        <button 
+        <button
           onClick={openAddModal}
           style={{
             background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
@@ -307,10 +307,10 @@ const EmployeesPage = () => {
 
       {/* Contract End Alerts Warning Banner (30 days limit) */}
       {contractAlerts.length > 0 && (
-        <div style={{ 
-          background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', 
-          border: '1px solid rgba(239, 68, 68, 0.2)', 
-          borderRadius: '16px', 
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)',
+          border: '1px solid rgba(239, 68, 68, 0.2)',
+          borderRadius: '16px',
           padding: '1.25rem',
           display: 'flex',
           flexDirection: 'column',
@@ -426,7 +426,7 @@ const EmployeesPage = () => {
                   </td>
                   <td style={{ paddingLeft: '1.5rem', textAlign: 'left' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button 
+                      <button
                         onClick={() => { setUploadingEmp(emp); setUploadModalOpen(true); }}
                         title="تحميل صور بصمة الوجه"
                         style={{
@@ -441,8 +441,8 @@ const EmployeesPage = () => {
                         <Camera size={14} />
                       </button>
                       {/* Hide edit if it's CEO and current user is not CEO */}
-                      {!( (emp.employee_id === 'EMP-7777' || emp.job_title === 'الرئيس التنفيذي') && user?.role !== 'ceo' ) && (
-                        <button 
+                      {!((emp.employee_id === 'EMP-7777' || emp.job_title === 'الرئيس التنفيذي') && user?.role !== 'ceo') && (
+                        <button
                           onClick={() => openEditModal(emp)}
                           title="الملف الرقمي والتعديل"
                           style={{
@@ -459,13 +459,13 @@ const EmployeesPage = () => {
                       )}
                       {/* Never allow deletion of the CEO, and restrict deletion to admin only */}
                       {!(emp.employee_id === 'EMP-7777' || emp.job_title === 'الرئيس التنفيذي') && user?.role === 'admin' && (
-                        <button 
+                        <button
                           onClick={() => handleDelete(emp.employee_id)}
                           title="حذف الملف"
                           style={{
                             background: 'rgba(239, 68, 68, 0.1)',
                             border: '1px solid rgba(239, 68, 68, 0.2)',
-                            color: '#f87171',
+                            color: '#fc6969ff',
                             padding: '0.4rem',
                             borderRadius: '6px',
                             cursor: 'pointer'
@@ -495,7 +495,7 @@ const EmployeesPage = () => {
             textAlign: 'right',
             animation: 'modalScale 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
           }}>
-            <button 
+            <button
               onClick={() => setModalOpen(false)}
               style={{ position: 'absolute', left: '1.5rem', top: '1.5rem', background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}
             >
@@ -580,8 +580,8 @@ const EmployeesPage = () => {
 
                 {isEdit && (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       id="two_factor_enabled"
                       name="two_factor_enabled"
                       checked={formData.two_factor_enabled}
@@ -789,7 +789,7 @@ const EmployeesPage = () => {
             {modalTab === 'assets' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <h4 style={{ fontSize: '0.95rem', color: 'var(--text-main)' }}>العهد والأصول المسلمة للموظف:</h4>
-                
+
                 {assignedAssets.length === 0 ? (
                   <div style={{ padding: '2rem', background: 'rgba(0,255,213,0.02)', border: '1px dashed var(--glass-border)', borderRadius: '12px', color: 'var(--primary)', textAlign: 'center', fontSize: '0.85rem' }}>
                     ✓ الموظف ليس لديه أي عهد معلقة حالياً. يمكن عمل "مخالصة" وإيقاف الخدمة في أي وقت.
@@ -800,7 +800,7 @@ const EmployeesPage = () => {
                       <AlertCircle size={16} />
                       <span>تنبيه: لا يمكن إنهاء الخدمة أو حذف الموظف إلا بعد إرجاع هذه العهد أولاً.</span>
                     </div>
-                    
+
                     <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', overflow: 'hidden' }}>
                       <table className="data-table" style={{ marginTop: 0 }}>
                         <thead>
