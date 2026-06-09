@@ -64,8 +64,12 @@ def startup_db_client():
 
 @app.on_event("shutdown")
 def shutdown_db_client():
-    get_client().close()
-    logger.info("🛑 MongoDB connection closed.")
+    from app.database import _client
+    if _client is not None:
+        _client.close()
+        logger.info("🛑 MongoDB connection closed.")
+    else:
+        logger.info("🛑 Shutting down (no DB connection was established).")
 
 
 # Include routers
