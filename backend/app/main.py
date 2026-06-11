@@ -26,6 +26,11 @@ from app.config import settings
 from app.database import get_client, get_db
 from app.routes import auth, employees, attendance, departments, dashboard, reports, settings as settings_routes, leaves, advances, loans, assets, payroll
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from app.services.attendance_cron import mark_absences_for_today
+
+scheduler = BackgroundScheduler()
+
 app = FastAPI(
     title="HR Attendance AI API",
     description="Backend API for the real-time HR Attendance AI System",
@@ -60,10 +65,20 @@ def startup_db_client():
     # to prevent blocking uvicorn from opening the port, which causes healthcheck timeouts on cloud deployments.
     # get_db()
     logger.info("🚀 App starting up (DB connection deferred to first request).")
+    
+    # Start background scheduler
+    if not scheduler.running:
+        scheduler.add_job(mark_absences_for_today, 'cron', hour=23, minute=50)
+        scheduler.start()
+        logger.info("⏱️ Background scheduler started. Auto-absent job scheduled at 23:50 daily.")
 
 
 @app.on_event("shutdown")
 def shutdown_db_client():
+    if scheduler.running:
+        scheduler.shutdown()
+        logger.info("⏱️ Background scheduler stopped.")
+        
     from app.database import _client
     if _client is not None:
         _client.close()
