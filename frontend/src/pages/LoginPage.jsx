@@ -112,8 +112,8 @@ const LoginPage = () => {
               marginBottom: '1rem'
             }} 
           />
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.5px', color: 'var(--text-dark)' }}>بوابة الموظفين</h2>
-          <p style={{ color: 'var(--text-dark-dim)', fontSize: '0.9rem', marginTop: '0.25rem' }}>نظام داخلي لإدارة الموارد البشرية والحضور</p>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.5px', color: 'var(--text-main)' }}>بوابة الموظفين</h2>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginTop: '0.25rem' }}>نظام داخلي لإدارة الموارد البشرية والحضور</p>
         </div>
 
         {error && (
@@ -138,9 +138,9 @@ const LoginPage = () => {
         {!step2fa ? (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'right' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-dark-dim)' }}>البريد الإلكتروني</label>
+              <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-dim)' }}>البريد الإلكتروني</label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dark-dim)' }} />
+                <Mail size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                 <input
                   type="email"
                   required
@@ -149,11 +149,11 @@ const LoginPage = () => {
                   placeholder="name@xqpharma.com"
                   style={{
                     width: '100%',
-                    background: 'rgba(0, 39, 73, 0.02)',
+                    background: 'rgba(2, 11, 38, 0.5)',
                     border: '1px solid var(--glass-border)',
                     borderRadius: '12px',
                     padding: '0.75rem 2.5rem 0.75rem 1rem',
-                    color: 'var(--text-dark)',
+                    color: 'var(--text-main)',
                     fontSize: '0.95rem',
                     outline: 'none',
                     textAlign: 'right',
@@ -165,9 +165,9 @@ const LoginPage = () => {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'right' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-dark-dim)' }}>كلمة المرور</label>
+              <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-dim)' }}>كلمة المرور</label>
               <div style={{ position: 'relative' }}>
-                <KeyRound size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dark-dim)' }} />
+                <KeyRound size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                 <input
                   type="password"
                   required
@@ -176,11 +176,11 @@ const LoginPage = () => {
                   placeholder="••••••••"
                   style={{
                     width: '100%',
-                    background: 'rgba(0, 39, 73, 0.02)',
+                    background: 'rgba(2, 11, 38, 0.5)',
                     border: '1px solid var(--glass-border)',
                     borderRadius: '12px',
                     padding: '0.75rem 2.5rem 0.75rem 1rem',
-                    color: 'var(--text-dark)',
+                    color: 'var(--text-main)',
                     fontSize: '0.95rem',
                     outline: 'none',
                     textAlign: 'right',
@@ -229,13 +229,13 @@ const LoginPage = () => {
         ) : (
           <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'right' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-dark-dim)' }}>رمز التحقق الثنائي (OTP)</label>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-dark-dim)', marginBottom: '0.5rem' }}>تم إرسال رمز تحقق مؤقت لحسابك. يرجى إدخاله للمتابعة.</p>
+              <label style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-dim)' }}>رمز التحقق الثنائي (OTP)</label>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>تم إرسال رمز تحقق مؤقت لحسابك. يرجى إدخاله للمتابعة.</p>
               
               {/* The OTP code is securely logged to the backend terminal / sent via email simulation */}
               
               <div style={{ position: 'relative' }}>
-                <ShieldCheck size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dark-dim)' }} />
+                <ShieldCheck size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                 <input
                   type="text"
                   required
@@ -245,11 +245,11 @@ const LoginPage = () => {
                   placeholder="------"
                   style={{
                     width: '100%',
-                    background: 'rgba(0, 39, 73, 0.02)',
+                    background: 'rgba(2, 11, 38, 0.5)',
                     border: '1px solid var(--glass-border)',
                     borderRadius: '12px',
                     padding: '0.75rem 2.5rem 0.75rem 1rem',
-                    color: 'var(--text-dark)',
+                    color: 'var(--text-main)',
                     fontSize: '1.5rem',
                     letterSpacing: '4px',
                     outline: 'none',
@@ -302,7 +302,7 @@ const LoginPage = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-dark-dim)',
+                color: 'var(--text-dim)',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
                 textDecoration: 'underline',
@@ -326,8 +326,8 @@ const LoginPage = () => {
         }
         .login-input:focus {
           border-color: var(--primary) !important;
-          box-shadow: 0 0 0 3px var(--primary-light);
-          background: #ffffff !important;
+          box-shadow: 0 0 0 3px var(--primary-light) !important;
+          background: rgba(2, 11, 38, 0.8) !important;
         }
       `}</style>
     </div>
