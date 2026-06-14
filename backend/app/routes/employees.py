@@ -328,23 +328,22 @@ async def upload_document(
     file: UploadFile = File(...),
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    """Upload scanner hiring documents to employee profile (Base64 storage)."""
+    """Upload scanner hiring documents to employee profile. Admin/HR only."""
     emp = employees_col().find_one({"employee_id": employee_id})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    import base64
-    content = await file.read()
-    
-    # Check size (limit to ~2MB to avoid MongoDB document bloat)
-    if len(content) > 2 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="حجم الملف كبير جداً. الحد الأقصى 2 ميجابايت.")
-
-    encoded = base64.b64encode(content).decode('utf-8')
-    mime_type = file.content_type or "application/pdf"
-    doc_url = f"data:{mime_type};base64,{encoded}"
-
+    # Save file
+    ext = file.filename.split(".")[-1] if "." in file.filename else "pdf"
     doc_id = str(uuid.uuid4())[:8]
+    filename = f"{employee_id}_doc_{doc_id}.{ext}"
+    filepath = os.path.join(settings.UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    doc_url = f"/uploads/{filename}"
     doc_entry = {
         "doc_id": doc_id,
         "name": name,
@@ -424,18 +423,21 @@ async def upload_photo(
     photo: UploadFile = File(...),
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    """Upload a profile photo for an employee (Base64 storage for Back4App compatibility)."""
+    """Upload a profile photo for an employee."""
     emp = employees_col().find_one({"employee_id": employee_id})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # Read and encode file to Base64
-    import base64
-    content = await photo.read()
-    encoded = base64.b64encode(content).decode('utf-8')
-    mime_type = photo.content_type or "image/jpeg"
-    photo_url = f"data:{mime_type};base64,{encoded}"
+    # Save file
+    ext = photo.filename.split(".")[-1] if "." in photo.filename else "jpg"
+    filename = f"{employee_id}_profile.{ext}"
+    filepath = os.path.join(settings.UPLOAD_DIR, filename)
 
+    with open(filepath, "wb") as f:
+        content = await photo.read()
+        f.write(content)
+
+    photo_url = f"/uploads/{filename}"
     employees_col().update_one(
         {"employee_id": employee_id}, {"$set": {"photo_url": photo_url}}
     )
