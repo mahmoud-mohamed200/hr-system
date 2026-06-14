@@ -41,16 +41,14 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     
     # Decrypt salary
     basic_salary = decrypt_float(emp.get("salary")) or 0.0
-    allowances = round(basic_salary * 0.10, 2)  # default 10% allowance
-    
+
     # Query attendance records for the month
     attendance_records = list(attendance_col().find({
         "employee_id": emp_id,
         "date": {"$regex": f"^{month}"}
     }))
     
-    # 1. Overtime Calculation (hours exceeding 8 per day, paid at 1.5x hourly rate)
-    overtime_hours = 0.0
+    # 1. Lateness minutes calculation
     lateness_minutes = 0.0
     checked_in_dates = set()
     
@@ -59,10 +57,6 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     if not is_ceo:
         for r in attendance_records:
             checked_in_dates.add(r["date"])
-            # Daily overtime
-            hw = r.get("hours_worked") or 0.0
-            if hw > 8.0:
-                overtime_hours += (hw - 8.0)
                 
             # Lateness minutes
             if r.get("status") == "late" and r.get("check_in"):
@@ -78,19 +72,12 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
                     lateness_minutes += 30
                 
     hourly_rate = basic_salary / 240.0 if basic_salary > 0 else 0.0
-    overtime_pay = round(overtime_hours * hourly_rate * 1.5, 2)
     
     # Lateness deduction (EGP 2 per minute late or 0.5x hourly rate equivalent)
     deductions_lateness = round((lateness_minutes / 60.0) * hourly_rate * 0.5, 2)
     
     # Gross Salary
-    gross_salary = basic_salary + allowances + overtime_pay
-    
-    # 2. Egyptian Deductions: Insurance & Taxes
-    # Insurance: 11% of basic salary
-    deductions_insurance = round(basic_salary * 0.11, 2)
-    # Taxes: 10% of gross salary (simplified Egyptian bracket)
-    deductions_taxes = round(gross_salary * 0.10, 2)
+    gross_salary = basic_salary
     
     # 3. Unjustified Absence Deduction
     deductions_unjustified_absence = 0.0
@@ -139,8 +126,6 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
             
     # Calculate Net Salary
     net_salary = gross_salary - (
-        deductions_insurance + 
-        deductions_taxes + 
         deductions_unjustified_absence + 
         deductions_lateness + 
         deductions_loans + 
@@ -155,11 +140,6 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
         "department": emp.get("department", ""),
         "month": month,
         "basic_salary": basic_salary,
-        "allowances": allowances,
-        "overtime_hours": overtime_hours,
-        "overtime_pay": overtime_pay,
-        "deductions_insurance": deductions_insurance,
-        "deductions_taxes": deductions_taxes,
         "deductions_unjustified_absence": deductions_unjustified_absence,
         "deductions_lateness": deductions_lateness,
         "deductions_loans": deductions_loans,

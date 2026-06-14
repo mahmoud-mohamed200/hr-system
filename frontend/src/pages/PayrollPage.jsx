@@ -173,10 +173,6 @@ const PayrollPage = () => {
                   <tr style={{ background: 'rgba(0, 39, 73, 0.01)' }}>
                     <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>اسم الموظف</th>
                     <th style={{ textAlign: 'right' }}>الأساسي</th>
-                    <th style={{ textAlign: 'right' }}>الحوافز (١٠٪)</th>
-                    <th style={{ textAlign: 'right' }}>الإضافي</th>
-                    <th style={{ textAlign: 'right' }}>تأمينات (١١٪)</th>
-                    <th style={{ textAlign: 'right' }}>ضرائب (١٠٪)</th>
                     <th style={{ textAlign: 'right' }}>الغياب</th>
                     <th style={{ textAlign: 'right' }}>التأخير</th>
                     <th style={{ textAlign: 'right' }}>قسط القرض</th>
@@ -190,10 +186,6 @@ const PayrollPage = () => {
                     <tr key={idx} className="table-row">
                       <td style={{ paddingRight: '1.5rem', fontWeight: 600, color: 'var(--text-main)', textAlign: 'right' }}>{rec.employee_name}</td>
                       <td style={{ textAlign: 'right' }}>{rec.basic_salary} ج.م</td>
-                      <td style={{ textAlign: 'right' }}>{rec.allowances} ج.م</td>
-                      <td style={{ textAlign: 'right', color: 'var(--accent)' }}>+{rec.overtime_pay} ج.م <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>({rec.overtime_hours}س)</span></td>
-                      <td style={{ textAlign: 'right', color: '#f87171' }}>-{rec.deductions_insurance} ج.م</td>
-                      <td style={{ textAlign: 'right', color: '#f87171' }}>-{rec.deductions_taxes} ج.م</td>
                       <td style={{ textAlign: 'right', color: '#f87171' }}>-{rec.deductions_unjustified_absence} ج.م</td>
                       <td style={{ textAlign: 'right', color: '#f87171' }}>-{rec.deductions_lateness} ج.م</td>
                       <td style={{ textAlign: 'right', color: '#f87171' }}>-{rec.deductions_loans} ج.م</td>
@@ -362,26 +354,6 @@ const PayrollPage = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
                     <span style={{ color: 'var(--text-dim)' }}>الراتب الأساسي</span>
                     <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{decryptedPayslip.basic_salary} ج.م</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
-                    <span style={{ color: 'var(--text-dim)' }}>الحوافز والبدلات المعتمدة (١٠٪)</span>
-                    <span style={{ color: 'var(--accent)' }}>+{decryptedPayslip.allowances} ج.م</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
-                    <span style={{ color: 'var(--text-dim)' }}>ساعات العمل الإضافي المستحقة ({decryptedPayslip.overtime_hours}س)</span>
-                    <span style={{ color: 'var(--accent)' }}>+{decryptedPayslip.overtime_pay} ج.م</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
-                    <span>خصم حصة التأمينات الاجتماعية (١١٪ من الأساسي)</span>
-                    <span>-{decryptedPayslip.deductions_insurance} ج.م</span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
-                    <span>خصم الضرائب المستحقة (١٠٪)</span>
-                    <span>-{decryptedPayslip.deductions_taxes} ج.م</span>
                   </div>
 
                   {decryptedPayslip.deductions_unjustified_absence > 0 && (
