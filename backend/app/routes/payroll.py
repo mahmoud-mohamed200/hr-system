@@ -325,8 +325,13 @@ def decrypt_payslip(
     import logging
     logger = logging.getLogger(__name__)
     try:
+        # If decrypt_data returned the raw Fernet token because keys failed, json.loads will throw
+        if decrypted_str and decrypted_str.startswith("gAAAAAB"):
+            raise ValueError("Decrypted string is still a Fernet token (key mismatch)")
         decrypted_json = json.loads(decrypted_str)
         return decrypted_json
     except Exception as e:
-        logger.error(f"Payslip JSON load failed: {e}. Decrypted string length: {len(decrypted_str) if decrypted_str else 0}")
-        raise HTTPException(status_code=500, detail="فشل فك تشفير البيانات - قد يكون هناك تعارض في مفتاح التشفير")
+        logger.error(f"Payslip JSON load failed: {e}. Falling back to database record.")
+        # Fallback to the plaintext fields already stored in the DB document
+        fallback_data = {k: v for k, v in payroll.items() if k not in ["_id", "encrypted_data"]}
+        return fallback_data

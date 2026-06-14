@@ -287,7 +287,7 @@ const EmployeesPage = () => {
         <button
           onClick={openAddModal}
           style={{
-            background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
             color: '#ffffff',
             border: 'none',
             padding: '0.6rem 1.2rem',
@@ -384,7 +384,7 @@ const EmployeesPage = () => {
             لا يوجد موظفين مسجلين حالياً. اضغط على إضافة موظف للبدء.
           </div>
         ) : (
-          <table className="data-table" style={{ marginTop: 0 }}>
+          <table className="data-table" style={{ marginTop: 0, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', borderCollapse: 'separate', borderSpacing: 0, overflow: 'hidden' }}>
             <thead>
               <tr style={{ background: 'rgba(0, 39, 73, 0.01)' }}>
                 <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>كود الموظف</th>
@@ -398,7 +398,7 @@ const EmployeesPage = () => {
             <tbody>
               {employees.map(emp => (
                 <tr key={emp.id} className="table-row">
-                  <td style={{ paddingRight: '1.5rem', fontWeight: 600, color: 'var(--primary)', textAlign: 'right' }}>{emp.employee_id}</td>
+                  <td style={{ paddingRight: '1.5rem', fontWeight: 600, color: '#22d3ee', textAlign: 'right' }}>{emp.employee_id}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-start' }}>
                       <div className="user-avatar" style={{ width: '40px', height: '40px', fontSize: '1.1rem' }}>
@@ -418,8 +418,10 @@ const EmployeesPage = () => {
                       borderRadius: '12px',
                       fontSize: '0.75rem',
                       fontWeight: 600,
-                      background: emp.is_active ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                      color: emp.is_active ? 'var(--accent)' : 'var(--danger)'
+                      background: 'transparent',
+                      color: emp.is_active ? '#4ade80' : '#f87171',
+                      border: emp.is_active ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid rgba(248, 113, 113, 0.3)',
+                      boxShadow: emp.is_active ? '0 0 8px rgba(74, 222, 128, 0.2)' : '0 0 8px rgba(248, 113, 113, 0.2)'
                     }}>
                       {emp.is_active ? 'نشط' : 'معطل'}
                     </span>
@@ -430,13 +432,15 @@ const EmployeesPage = () => {
                         onClick={() => { setUploadingEmp(emp); setUploadModalOpen(true); }}
                         title="تحميل صور بصمة الوجه"
                         style={{
-                          background: 'rgba(96, 165, 250, 0.1)',
-                          border: '1px solid rgba(96, 165, 250, 0.2)',
-                          color: '#60a5fa',
+                          background: 'none',
+                          border: 'none',
+                          color: '#9ca3af',
                           padding: '0.4rem',
-                          borderRadius: '6px',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          transition: 'color 0.2s'
                         }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#60a5fa'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#9ca3af'}
                       >
                         <Camera size={14} />
                       </button>
@@ -446,13 +450,15 @@ const EmployeesPage = () => {
                           onClick={() => openEditModal(emp)}
                           title="الملف الرقمي والتعديل"
                           style={{
-                            background: 'rgba(0, 39, 73, 0.03)',
-                            border: '1px solid var(--glass-border)',
-                            color: 'var(--text-main)',
+                            background: 'none',
+                            border: 'none',
+                            color: '#9ca3af',
                             padding: '0.4rem',
-                            borderRadius: '6px',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            transition: 'color 0.2s'
                           }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = '#60a5fa'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = '#9ca3af'}
                         >
                           <Edit2 size={14} />
                         </button>

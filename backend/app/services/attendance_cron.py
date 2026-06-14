@@ -21,6 +21,11 @@ def mark_absences_for_today():
 
     today_str = datetime.now().strftime("%Y-%m-%d")
 
+    # Start calculating officially from July 1st, 2026
+    if today_str < "2026-07-01":
+        logger.info(f"System is in grace period until July. Skipping auto-absent job for {today_str}.")
+        return
+
     # Fetch all active employees, excluding CEO/special ones
     active_employees = list(employees_col().find({
         "is_active": True,
@@ -58,5 +63,30 @@ def mark_absences_for_today():
             }
             attendance_col().insert_one(record)
             absent_count += 1
+        elif existing_record.get("check_in") and not existing_record.get("check_out"):
+            # They checked in but didn't check out. Default check-out at 19:00:00.
+            check_in_time_str = existing_record["check_in"]
+            check_out_time_str = "19:00:00"
+            try:
+                t_in = datetime.strptime(check_in_time_str, "%H:%M:%S")
+                t_out = datetime.strptime(check_out_time_str, "%H:%M:%S")
+                diff = (t_out - t_in).total_seconds() / 3600
+                hours = round(max(0, diff), 2)
+            except ValueError:
+                hours = 0.0
 
-    logger.info(f"Auto-absent job finished. Marked {absent_count} employees as absent.")
+            current_notes = existing_record.get("notes") or ""
+            new_notes = current_notes + " | تسجيل انصراف تلقائي (19:00)" if current_notes else "تسجيل انصراف تلقائي (19:00)"
+            
+            attendance_col().update_one(
+                {"_id": existing_record["_id"]},
+                {
+                    "$set": {
+                        "check_out": check_out_time_str,
+                        "hours_worked": hours,
+                        "notes": new_notes
+                    }
+                }
+            )
+
+    logger.info(f"Auto-absent job finished. Marked {absent_count} employees as absent and checked-out the rest at 19:00.")
