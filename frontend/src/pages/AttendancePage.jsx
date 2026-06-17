@@ -13,6 +13,71 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const getEgyptianHolidays = (year) => {
+  const fixed = {
+    '01-07': 'عيد الميلاد المجيد',
+    '01-25': 'عيد الشرطة وثورة ٢٥ يناير',
+    '04-25': 'عيد تحرير سيناء',
+    '05-01': 'عيد العمال',
+    '06-30': 'ثورة ٣٠ يونيو',
+    '07-23': 'ثورة ٢٣ يوليو',
+    '10-06': 'عيد القوات المسلحة (نصر ٦ أكتوبر)'
+  };
+
+  const variable = {
+    2025: {
+      '03-30': 'عيد الفطر المبارك',
+      '03-31': 'عيد الفطر المبارك',
+      '04-01': 'عيد الفطر المبارك',
+      '04-21': 'عيد شم النسيم',
+      '06-05': 'وقفة عرفات',
+      '06-06': 'عيد الأضحى المبارك',
+      '06-07': 'عيد الأضحى المبارك',
+      '06-08': 'عيد الأضحى المبارك',
+      '06-09': 'عيد الأضحى المبارك',
+      '06-26': 'رأس السنة الهجرية',
+      '09-04': 'المولد النبوي الشريف'
+    },
+    2026: {
+      '03-19': 'عيد الفطر المبارك',
+      '03-20': 'عيد الفطر المبارك',
+      '03-21': 'عيد الفطر المبارك',
+      '04-13': 'عيد شم النسيم',
+      '05-26': 'وقفة عرفات',
+      '05-27': 'عيد الأضحى المبارك',
+      '05-28': 'عيد الأضحى المبارك',
+      '05-29': 'عيد الأضحى المبارك',
+      '05-30': 'عيد الأضحى المبارك',
+      '06-18': 'رأس السنة الهجرية',
+      '08-26': 'المولد النبوي الشريف'
+    },
+    2027: {
+      '03-09': 'عيد الفطر المبارك',
+      '03-10': 'عيد الفطر المبارك',
+      '03-11': 'عيد الفطر المبارك',
+      '05-03': 'عيد شم النسيم',
+      '05-15': 'وقفة عرفات',
+      '05-16': 'عيد الأضحى المبارك',
+      '05-17': 'عيد الأضحى المبارك',
+      '05-18': 'عيد الأضحى المبارك',
+      '05-19': 'عيد الأضحى المبارك',
+      '06-06': 'رأس السنة الهجرية',
+      '08-15': 'المولد النبوي الشريف'
+    }
+  };
+
+  const holidays = {};
+  for (const [md, name] of Object.entries(fixed)) {
+    holidays[`${year}-${md}`] = name;
+  }
+  if (variable[year]) {
+    for (const [md, name] of Object.entries(variable[year])) {
+      holidays[`${year}-${md}`] = name;
+    }
+  }
+  return holidays;
+};
+
 const AttendancePage = () => {
   const { user: currentUser } = useAuth();
   const isAdminOrHr = ['admin', 'hr'].includes(currentUser?.role);
@@ -24,6 +89,16 @@ const AttendancePage = () => {
   const [loading, setLoading] = useState(true);
   const [checkingGps, setCheckingGps] = useState(false);
   const [syncingBiometric, setSyncingBiometric] = useState(false);
+
+  // View Mode & Calendar State
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'calendar'
+  const [selectedCalendarEmp, setSelectedCalendarEmp] = useState('');
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [calendarRecords, setCalendarRecords] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
   
   // Filters
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -63,13 +138,36 @@ const AttendancePage = () => {
           client.get('/employees?per_page=100')
         ]);
         setDepartments(deptRes.data.departments);
-        setEmployees(empRes.data.employees);
+        const emps = empRes.data.employees;
+        setEmployees(emps);
+        if (currentUser?.employee_id) {
+          setSelectedCalendarEmp(currentUser.employee_id);
+        } else if (emps.length > 0) {
+          setSelectedCalendarEmp(emps[0].employee_id);
+        }
       } else {
         const deptRes = await client.get('/departments');
         setDepartments(deptRes.data.departments);
+        if (currentUser?.employee_id) {
+          setSelectedCalendarEmp(currentUser.employee_id);
+        }
       }
     } catch (err) {
       console.error('Error fetching filters data:', err);
+    }
+  };
+
+  const fetchCalendarAttendance = async () => {
+    if (!selectedCalendarEmp) return;
+    try {
+      setCalendarLoading(true);
+      const res = await client.get(`/attendance/employee/${selectedCalendarEmp}?month=${calendarMonth}`);
+      setCalendarRecords(res.data.records);
+    } catch (err) {
+      console.error('Error fetching calendar records:', err);
+      toast.error('فشل تحميل سجلات الحضور للتقويم');
+    } finally {
+      setCalendarLoading(false);
     }
   };
 
@@ -80,6 +178,12 @@ const AttendancePage = () => {
   useEffect(() => {
     fetchFilterData();
   }, []);
+
+  useEffect(() => {
+    if (viewMode === 'calendar') {
+      fetchCalendarAttendance();
+    }
+  }, [selectedCalendarEmp, calendarMonth, viewMode]);
 
   const handleManualAction = async (e) => {
     e.preventDefault();
@@ -244,6 +348,362 @@ const AttendancePage = () => {
     return map[status] || status;
   };
 
+  const handlePrevMonth = () => {
+    const [year, month] = calendarMonth.split('-').map(Number);
+    const prevDate = new Date(year, month - 2, 1);
+    setCalendarMonth(`${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const handleNextMonth = () => {
+    const [year, month] = calendarMonth.split('-').map(Number);
+    const nextDate = new Date(year, month, 1);
+    setCalendarMonth(`${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  const getDaysArray = (year, monthIndex) => {
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const firstDayIndex = new Date(year, monthIndex, 1).getDay();
+    const startOffset = (firstDayIndex + 1) % 7;
+    
+    const arr = [];
+    for (let i = 0; i < startOffset; i++) {
+      arr.push(null);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      arr.push(d);
+    }
+    return arr;
+  };
+
+  const renderCalendarFilters = () => {
+    const [calendarYearStr, calendarMonthStr] = calendarMonth.split('-');
+    const calendarYear = parseInt(calendarYearStr);
+    const calendarMonthIndex = parseInt(calendarMonthStr) - 1;
+    const arabicMonths = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+
+    return (
+      <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', padding: '1.25rem 1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={handlePrevMonth}
+            style={{
+              background: 'rgba(0, 39, 73, 0.05)',
+              border: '1px solid var(--glass-border)',
+              color: 'var(--text-main)',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.9rem'
+            }}
+          >
+            الشهر السابق
+          </button>
+          <span style={{ fontWeight: '800', fontSize: '1.2rem', color: 'var(--text-main)', minWidth: '140px', textAlign: 'center' }}>
+            {arabicMonths[calendarMonthIndex]} {calendarYear}
+          </span>
+          <button 
+            onClick={handleNextMonth}
+            style={{
+              background: 'rgba(0, 39, 73, 0.05)',
+              border: '1px solid var(--glass-border)',
+              color: 'var(--text-main)',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.9rem'
+            }}
+          >
+            الشهر التالي
+          </button>
+        </div>
+
+        {/* Employee selector for Admins/HR/CEO */}
+        {(isAdminOrHr || isCeo) ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: '600' }}>عرض حضور الموظف:</span>
+            <select
+              value={selectedCalendarEmp}
+              onChange={(e) => setSelectedCalendarEmp(e.target.value)}
+              style={{
+                background: 'rgba(0, 39, 73, 0.02)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: '8px',
+                padding: '0.6rem 1rem',
+                color: 'var(--text-main)',
+                outline: 'none',
+                direction: 'rtl',
+                minWidth: '220px',
+                fontWeight: '600'
+              }}
+            >
+              {employees
+                .filter(emp => emp.employee_id !== 'EMP-7777' && emp.job_title !== 'الرئيس التنفيذي')
+                .map(emp => (
+                  <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>
+                    {emp.name} ({emp.employee_id})
+                  </option>
+                ))}
+            </select>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.95rem', color: 'var(--text-dim)' }}>الموظف:</span>
+            <span style={{ fontWeight: '800', color: 'var(--primary)', fontSize: '1.1rem' }}>{currentUser?.name}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderCalendarGrid = () => {
+    const [calendarYearStr, calendarMonthStr] = calendarMonth.split('-');
+    const calendarYear = parseInt(calendarYearStr);
+    const calendarMonthIndex = parseInt(calendarMonthStr) - 1;
+    const holidays = getEgyptianHolidays(calendarYear);
+    const daysArray = getDaysArray(calendarYear, calendarMonthIndex);
+
+    const weekdays = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    
+    return (
+      <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+          {weekdays.map(day => (
+            <div key={day} style={{ fontWeight: '700', color: 'var(--text-dim)', paddingBottom: '0.75rem', borderBottom: '2px solid var(--glass-border)' }}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', minHeight: '350px' }}>
+          {calendarLoading ? (
+            <div style={{ gridColumn: 'span 7', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-dim)' }}>
+              جاري تحميل بيانات التقويم...
+            </div>
+          ) : (
+            daysArray.map((d, index) => {
+              if (d === null) {
+                return (
+                  <div 
+                    key={`empty-${index}`} 
+                    style={{ 
+                      background: 'rgba(255, 255, 255, 0.01)', 
+                      borderRadius: '8px',
+                      opacity: 0.3
+                    }} 
+                  />
+                );
+              }
+
+              const dayStr = String(d).padStart(2, '0');
+              const fullDateStr = `${calendarYear}-${calendarMonthStr}-${dayStr}`;
+              const holidayName = holidays[fullDateStr];
+              
+              const dateObj = new Date(calendarYear, calendarMonthIndex, d);
+              const dayOfWeek = dateObj.getDay();
+              const isWeekendDay = dayOfWeek === 5 || dayOfWeek === 6;
+              const systemTodayStr = new Date().toISOString().split('T')[0];
+              const isFuture = fullDateStr > systemTodayStr;
+              const isToday = fullDateStr === systemTodayStr;
+
+              const record = calendarRecords.find(r => r.date === fullDateStr);
+
+              let cellBg = 'rgba(255, 255, 255, 0.02)';
+              let borderStyle = '1px solid var(--glass-border)';
+              let badgeColor = '';
+              let badgeBg = '';
+              let badgeText = '';
+              let badgeTime = '';
+
+              if (isToday) {
+                borderStyle = '2.5px solid var(--primary)';
+              }
+
+              if (isFuture) {
+                cellBg = 'rgba(255, 255, 255, 0.01)';
+              } else if (holidayName) {
+                cellBg = 'rgba(244, 63, 94, 0.08)';
+                badgeText = holidayName;
+                badgeColor = '#fda4af';
+                badgeBg = 'rgba(244, 63, 94, 0.2)';
+              } else if (record) {
+                if (record.status === 'on_time') {
+                  cellBg = 'rgba(34, 197, 94, 0.06)';
+                  badgeText = 'حاضر';
+                  badgeColor = 'var(--accent)';
+                  badgeBg = 'rgba(34, 197, 94, 0.15)';
+                  if (record.check_in) {
+                    badgeTime = `${record.check_in.substring(0, 5)} - ${record.check_out ? record.check_out.substring(0, 5) : 'معلق'}`;
+                  }
+                } else if (record.status === 'late') {
+                  cellBg = 'rgba(245, 158, 11, 0.06)';
+                  badgeText = 'متأخر';
+                  badgeColor = '#fbbf24';
+                  badgeBg = 'rgba(245, 158, 11, 0.15)';
+                  if (record.check_in) {
+                    badgeTime = `${record.check_in.substring(0, 5)} - ${record.check_out ? record.check_out.substring(0, 5) : 'معلق'}`;
+                  }
+                } else if (record.status === 'absent') {
+                  cellBg = 'rgba(239, 68, 68, 0.06)';
+                  badgeText = 'غياب';
+                  badgeColor = '#fca5a5';
+                  badgeBg = 'rgba(239, 68, 68, 0.15)';
+                } else if (record.status === 'leave') {
+                  cellBg = 'rgba(59, 130, 246, 0.06)';
+                  badgeText = 'إجازة معتمدة';
+                  badgeColor = '#93c5fd';
+                  badgeBg = 'rgba(59, 130, 246, 0.15)';
+                  if (record.notes) {
+                    badgeTime = record.notes;
+                  }
+                } else if (record.status === 'mission') {
+                  cellBg = 'rgba(168, 85, 247, 0.06)';
+                  badgeText = 'مأمورية عمل';
+                  badgeColor = '#d8b4fe';
+                  badgeBg = 'rgba(168, 85, 247, 0.15)';
+                  if (record.notes) {
+                    badgeTime = record.notes;
+                  }
+                } else {
+                  cellBg = 'rgba(255, 255, 255, 0.03)';
+                  badgeText = translateStatus(record.status);
+                  badgeColor = 'var(--text-dim)';
+                  badgeBg = 'rgba(255, 255, 255, 0.1)';
+                }
+              } else if (isWeekendDay) {
+                cellBg = 'rgba(255, 255, 255, 0.04)';
+                badgeText = 'عطلة أسبوعية';
+                badgeColor = 'var(--text-dim)';
+                badgeBg = 'rgba(255, 255, 255, 0.05)';
+              } else {
+                cellBg = 'rgba(239, 68, 68, 0.03)';
+                badgeText = 'غياب';
+                badgeColor = '#fca5a5';
+                badgeBg = 'rgba(239, 68, 68, 0.1)';
+              }
+
+              return (
+                <div
+                  key={`day-${d}`}
+                  style={{
+                    background: cellBg,
+                    border: borderStyle,
+                    borderRadius: '8px',
+                    padding: '0.6rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    minHeight: '90px',
+                    transition: 'all 0.2s ease',
+                    cursor: 'default',
+                    position: 'relative',
+                    boxShadow: isToday ? '0 0 10px rgba(79, 70, 229, 0.3)' : 'none'
+                  }}
+                  className="calendar-cell-hover"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <span style={{ 
+                      fontWeight: '700', 
+                      fontSize: '0.95rem', 
+                      color: isToday ? 'var(--primary)' : 'var(--text-main)',
+                      background: isToday ? 'rgba(79, 70, 229, 0.15)' : 'transparent',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {d}
+                    </span>
+                    {isToday && (
+                      <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--primary)' }}>اليوم</span>
+                    )}
+                  </div>
+                  
+                  {badgeText && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '0.5rem', width: '100%' }}>
+                      <span style={{
+                        padding: '2px 6px',
+                        borderRadius: '6px',
+                        fontSize: '0.7rem',
+                        fontWeight: '700',
+                        background: badgeBg,
+                        color: badgeColor,
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: 'block'
+                      }} title={badgeText}>
+                        {badgeText}
+                      </span>
+                      {badgeTime && (
+                        <span style={{
+                          fontSize: '0.65rem',
+                          color: 'var(--text-dim)',
+                          textAlign: 'center',
+                          direction: 'ltr',
+                          display: 'block',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }} title={badgeTime}>
+                          {badgeTime}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: '600' }}>حاضر في الموعد</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: '600' }}>متأخر</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: '600' }}>غياب</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: '600' }}>إجازة معتمدة</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: '600' }}>مأمورية عمل</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(244, 63, 94, 0.15)', border: '1px solid rgba(244, 63, 94, 0.3)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: '600' }}>إجازة رسمية (القانون المصري)</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--glass-border)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: '600' }}>عطلة أسبوعية</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const translateSource = (source) => {
     const map = {
       gps: 'موبايل GPS',
@@ -257,7 +717,46 @@ const AttendancePage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', direction: 'rtl' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <Header title="سجل حركات الحضور والانصراف" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <Header title="سجل حركات الحضور والانصراف" />
+          {/* View Toggle */}
+          <div style={{ display: 'flex', background: 'rgba(0, 39, 73, 0.05)', borderRadius: '8px', padding: '2px', border: '1px solid var(--glass-border)' }}>
+            <button
+              onClick={() => setViewMode('table')}
+              style={{
+                background: viewMode === 'table' ? 'var(--bg-card)' : 'transparent',
+                color: viewMode === 'table' ? 'var(--primary)' : 'var(--text-dim)',
+                border: 'none',
+                padding: '0.4rem 1rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s ease',
+                boxShadow: viewMode === 'table' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
+              }}
+            >
+              عرض الجدول
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              style={{
+                background: viewMode === 'calendar' ? 'var(--bg-card)' : 'transparent',
+                color: viewMode === 'calendar' ? 'var(--primary)' : 'var(--text-dim)',
+                border: 'none',
+                padding: '0.4rem 1rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s ease',
+                boxShadow: viewMode === 'calendar' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
+              }}
+            >
+              عرض التقويم
+            </button>
+          </div>
+        </div>
         
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {/* Direct self manual check-in/out buttons */}
@@ -402,179 +901,188 @@ const AttendancePage = () => {
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem', padding: '1rem', alignItems: 'center' }}>
-        {(isAdminOrHr || isCeo) ? (
-          <>
-            <div style={{ gridColumn: 'span 4', position: 'relative' }}>
-              <Search size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
-              <input
-                type="text"
-                placeholder="بحث باسم الموظف أو الكود..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(0, 39, 73, 0.02)',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '8px',
-                  padding: '0.6rem 2.5rem 0.6rem 1rem',
-                  color: 'var(--text-main)',
-                  outline: 'none',
-                  textAlign: 'right'
-                }}
-              />
-            </div>
+      {viewMode === 'table' ? (
+        <>
+          {/* Filter Bar */}
+          <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem', padding: '1rem', alignItems: 'center' }}>
+            {(isAdminOrHr || isCeo) ? (
+              <>
+                <div style={{ gridColumn: 'span 4', position: 'relative' }}>
+                  <Search size={16} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
+                  <input
+                    type="text"
+                    placeholder="بحث باسم الموظف أو الكود..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(0, 39, 73, 0.02)',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: '8px',
+                      padding: '0.6rem 2.5rem 0.6rem 1rem',
+                      color: 'var(--text-main)',
+                      outline: 'none',
+                      textAlign: 'right'
+                    }}
+                  />
+                </div>
 
-            <div style={{ gridColumn: 'span 3', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <CalendarIcon size={16} color="var(--text-dim)" />
-              <input 
-                type="date" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(0, 39, 73, 0.02)',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: '8px',
-                  padding: '0.6rem 1rem',
-                  color: 'var(--text-main)',
-                  outline: 'none',
-                  textAlign: 'right'
-                }}
-              />
-            </div>
+                <div style={{ gridColumn: 'span 3', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <CalendarIcon size={16} color="var(--text-dim)" />
+                  <input 
+                    type="date" 
+                    value={date} 
+                    onChange={(e) => setDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(0, 39, 73, 0.02)',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: '8px',
+                      padding: '0.6rem 1rem',
+                      color: 'var(--text-main)',
+                      outline: 'none',
+                      textAlign: 'right'
+                    }}
+                  />
+                </div>
 
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              style={{
-                gridColumn: 'span 3',
-                background: 'rgba(0, 39, 73, 0.02)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '8px',
-                padding: '0.6rem 1rem',
-                color: 'var(--text-main)',
-                outline: 'none',
-                direction: 'rtl'
-              }}
-            >
-              <option value="">جميع الأقسام</option>
-              {departments.map(d => (
-                <option key={d.id} value={d.name} style={{ background: 'var(--bg-card)' }}>{d.name}</option>
-              ))}
-            </select>
+                <select
+                  value={selectedDept}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                  style={{
+                    gridColumn: 'span 3',
+                    background: 'rgba(0, 39, 73, 0.02)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '8px',
+                    padding: '0.6rem 1rem',
+                    color: 'var(--text-main)',
+                    outline: 'none',
+                    direction: 'rtl'
+                  }}
+                >
+                  <option value="">جميع الأقسام</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.name} style={{ background: 'var(--bg-card)' }}>{d.name}</option>
+                  ))}
+                </select>
 
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              style={{
-                gridColumn: 'span 2',
-                background: 'rgba(0, 39, 73, 0.02)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '8px',
-                padding: '0.6rem 1rem',
-                color: 'var(--text-main)',
-                outline: 'none',
-                direction: 'rtl'
-              }}
-            >
-              <option value="">جميع الحالات</option>
-              <option value="on_time">حاضر في الموعد</option>
-              <option value="late">متأخر</option>
-              <option value="absent">غياب</option>
-              <option value="leave">إجازة</option>
-              <option value="mission">مأمورية</option>
-            </select>
-          </>
-        ) : (
-          <div style={{ gridColumn: 'span 12', display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center' }}>
-            <CalendarIcon size={16} color="var(--text-dim)" />
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginLeft: '0.5rem' }}>تاريخ عرض الحركات:</span>
-            <input 
-              type="date" 
-              value={date} 
-              onChange={(e) => setDate(e.target.value)}
-              style={{
-                background: 'rgba(0, 39, 73, 0.02)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '8px',
-                padding: '0.6rem 1rem',
-                color: 'var(--text-main)',
-                outline: 'none',
-                textAlign: 'right'
-              }}
-            />
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  style={{
+                    gridColumn: 'span 2',
+                    background: 'rgba(0, 39, 73, 0.02)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '8px',
+                    padding: '0.6rem 1rem',
+                    color: 'var(--text-main)',
+                    outline: 'none',
+                    direction: 'rtl'
+                  }}
+                >
+                  <option value="">جميع الحالات</option>
+                  <option value="on_time">حاضر في الموعد</option>
+                  <option value="late">متأخر</option>
+                  <option value="absent">غياب</option>
+                  <option value="leave">إجازة</option>
+                  <option value="mission">مأمورية</option>
+                </select>
+              </>
+            ) : (
+              <div style={{ gridColumn: 'span 12', display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center' }}>
+                <CalendarIcon size={16} color="var(--text-dim)" />
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginLeft: '0.5rem' }}>تاريخ عرض الحركات:</span>
+                <input 
+                  type="date" 
+                  value={date} 
+                  onChange={(e) => setDate(e.target.value)}
+                  style={{
+                    background: 'rgba(0, 39, 73, 0.02)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '8px',
+                    padding: '0.6rem 1rem',
+                    color: 'var(--text-main)',
+                    outline: 'none',
+                    textAlign: 'right'
+                  }}
+                />
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Logs Table */}
-      <div className="card" style={{ padding: 0 }}>
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>جاري تحميل حركات الحضور...</div>
-        ) : filteredRecords.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-dim)' }}>
-            لا توجد حركات حضور مطابقة لخيارات البحث.
+          {/* Logs Table */}
+          <div className="card" style={{ padding: 0 }}>
+            {loading ? (
+              <div style={{ padding: '3rem', textAlign: 'center' }}>جاري تحميل حركات الحضور...</div>
+            ) : filteredRecords.length === 0 ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-dim)' }}>
+                لا توجد حركات حضور مطابقة لخيارات البحث.
+              </div>
+            ) : (
+              <table className="data-table" style={{ marginTop: 0 }}>
+                <thead>
+                  <tr style={{ background: 'rgba(0, 39, 73, 0.01)' }}>
+                    <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>كود الموظف</th>
+                    <th style={{ textAlign: 'right' }}>الموظف</th>
+                    <th style={{ textAlign: 'right' }}>القسم</th>
+                    <th style={{ textAlign: 'right' }}>توقيت الحضور</th>
+                    <th style={{ textAlign: 'right' }}>توقيت الانصراف</th>
+                    <th style={{ textAlign: 'right' }}>حالة الحضور</th>
+                    <th style={{ textAlign: 'right' }}>ساعات العمل</th>
+                    <th style={{ paddingLeft: '1.5rem', textAlign: 'left' }}>المصدر</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRecords.map(rec => (
+                    <tr key={rec.id} className="table-row">
+                      <td style={{ paddingRight: '1.5rem', fontWeight: 600, color: 'var(--primary)', textAlign: 'right' }}>{rec.employee_id}</td>
+                      <td style={{ textAlign: 'right' }}>{rec.employee_name}</td>
+                      <td style={{ textAlign: 'right' }}>{rec.department}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        {rec.check_in ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'flex-start' }}>
+                            <UserCheck size={14} color="var(--accent)" />
+                            {rec.check_in}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {rec.check_out ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'flex-start' }}>
+                            <UserX size={14} color="#60a5fa" />
+                            {rec.check_out}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          background: rec.status === 'on_time' ? 'rgba(34, 197, 94, 0.1)' : rec.status === 'late' ? 'rgba(239, 68, 68, 0.1)' : rec.status === 'absent' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255,255,255,0.05)',
+                          color: rec.status === 'on_time' ? 'var(--accent)' : rec.status === 'late' ? 'var(--danger)' : rec.status === 'absent' ? '#f87171' : 'var(--text-dim)'
+                        }}>
+                          {translateStatus(rec.status)}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>{rec.hours_worked !== null && rec.hours_worked !== undefined ? `${rec.hours_worked} ساعة` : '-'}</td>
+                      <td style={{ paddingLeft: '1.5rem', color: 'var(--text-dim)', fontSize: '0.8rem', textAlign: 'left' }}>
+                        {translateSource(rec.source)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-        ) : (
-          <table className="data-table" style={{ marginTop: 0 }}>
-            <thead>
-              <tr style={{ background: 'rgba(0, 39, 73, 0.01)' }}>
-                <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>كود الموظف</th>
-                <th style={{ textAlign: 'right' }}>الموظف</th>
-                <th style={{ textAlign: 'right' }}>القسم</th>
-                <th style={{ textAlign: 'right' }}>توقيت الحضور</th>
-                <th style={{ textAlign: 'right' }}>توقيت الانصراف</th>
-                <th style={{ textAlign: 'right' }}>حالة الحضور</th>
-                <th style={{ textAlign: 'right' }}>ساعات العمل</th>
-                <th style={{ paddingLeft: '1.5rem', textAlign: 'left' }}>المصدر</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRecords.map(rec => (
-                <tr key={rec.id} className="table-row">
-                  <td style={{ paddingRight: '1.5rem', fontWeight: 600, color: 'var(--primary)', textAlign: 'right' }}>{rec.employee_id}</td>
-                  <td style={{ textAlign: 'right' }}>{rec.employee_name}</td>
-                  <td style={{ textAlign: 'right' }}>{rec.department}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    {rec.check_in ? (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'flex-start' }}>
-                        <UserCheck size={14} color="var(--accent)" />
-                        {rec.check_in}
-                      </span>
-                    ) : '-'}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    {rec.check_out ? (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', justifyContent: 'flex-start' }}>
-                        <UserX size={14} color="#60a5fa" />
-                        {rec.check_out}
-                      </span>
-                    ) : '-'}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <span style={{
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      background: rec.status === 'on_time' ? 'rgba(34, 197, 94, 0.1)' : rec.status === 'late' ? 'rgba(239, 68, 68, 0.1)' : rec.status === 'absent' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255,255,255,0.05)',
-                      color: rec.status === 'on_time' ? 'var(--accent)' : rec.status === 'late' ? 'var(--danger)' : rec.status === 'absent' ? '#f87171' : 'var(--text-dim)'
-                    }}>
-                      {translateStatus(rec.status)}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>{rec.hours_worked !== null && rec.hours_worked !== undefined ? `${rec.hours_worked} ساعة` : '-'}</td>
-                  <td style={{ paddingLeft: '1.5rem', color: 'var(--text-dim)', fontSize: '0.8rem', textAlign: 'left' }}>
-                    {translateSource(rec.source)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+        </>
+      ) : (
+        <>
+          {renderCalendarFilters()}
+          {renderCalendarGrid()}
+        </>
+      )}
 
       {/* Manual Action Modal */}
       {manualModalOpen && (
@@ -663,6 +1171,15 @@ const AttendancePage = () => {
         }
         .table-row:hover {
           background: rgba(0, 39, 73, 0.01);
+        }
+        .calendar-cell-hover {
+          transition: all 0.2s ease-in-out;
+        }
+        .calendar-cell-hover:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0, 39, 73, 0.08);
+          border-color: var(--primary) !important;
+          background: rgba(255, 255, 255, 0.04) !important;
         }
       `}</style>
     </div>
