@@ -40,11 +40,11 @@ def request_advance(
 
     from app.services.encryption import decrypt_float
     basic_salary = decrypt_float(emp.get("salary")) or 0.0
-    limit = basic_salary * 0.5
+    limit = basic_salary * 0.75
     if data.amount > limit:
         raise HTTPException(
             status_code=400,
-            detail=f"قيمة السلفة المطلوبة ({data.amount} ج.م) تتجاوز الحد الأقصى المسموح به وهو 50% من الراتب الأساسي ({limit} ج.م)"
+            detail=f"قيمة السلفة المطلوبة ({data.amount} ج.م) تتجاوز الحد الأقصى المسموح به وهو 75% من الراتب الأساسي ({limit} ج.م)"
         )
 
     doc = {

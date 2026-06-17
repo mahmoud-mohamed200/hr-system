@@ -101,7 +101,68 @@ const AttendancePage = () => {
     }
   };
 
+  const isMobile = () => {
+    return /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
+  const requestBiometricAuth = async () => {
+    // Check if WebAuthn is available (fingerprint/FaceID on mobile)
+    if (!window.PublicKeyCredential) {
+      return true; // Fall back on unsupported browsers
+    }
+
+    try {
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (!available) {
+        return true; // No platform authenticator, allow anyway
+      }
+
+      // Use navigator.credentials to trigger biometric prompt
+      const challenge = new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge: challenge,
+          rp: { name: "XQ HR System" },
+          user: {
+            id: new Uint8Array(16),
+            name: currentUser?.email || "user",
+            displayName: currentUser?.name || "User"
+          },
+          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+          authenticatorSelection: {
+            authenticatorAttachment: "platform",
+            userVerification: "required"
+          },
+          timeout: 60000
+        }
+      });
+
+      return !!credential;
+    } catch (err) {
+      if (err.name === 'NotAllowedError') {
+        // User cancelled the biometric prompt
+        return false;
+      }
+      // Other errors — allow fallback
+      console.warn('Biometric auth error:', err);
+      return true;
+    }
+  };
+
   const handleSelfCheck = async (type) => {
+    // On mobile, require biometric authentication first
+    if (isMobile()) {
+      const toastVerify = toast.loading('يرجى التحقق من هويتك عبر بصمة الإصبع أو بصمة الوجه...');
+      const verified = await requestBiometricAuth();
+      toast.dismiss(toastVerify);
+      if (!verified) {
+        toast.error('فشل التحقق من الهوية. يرجى استخدام بصمة الإصبع أو بصمة الوجه للمتابعة.');
+        return;
+      }
+    }
+
     setLoading(true);
     const toastId = toast.loading(type === 'in' ? 'جاري تسجيل حضورك...' : 'جاري تسجيل انصرافك...');
     try {
