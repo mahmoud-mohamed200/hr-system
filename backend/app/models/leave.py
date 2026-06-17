@@ -26,6 +26,7 @@ class LeaveCreate(BaseModel):
     end_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
     reason: str
     duration_hours: Optional[float] = None  # Only for short permissions
+    attachment_url: Optional[str] = None
 
 
 class LeaveUpdateStatus(BaseModel):
@@ -45,3 +46,4 @@ class LeaveResponse(BaseModel):
     status: LeaveStatus
     created_at: str
     approved_by: Optional[str] = None
+    attachment_url: Optional[str] = None

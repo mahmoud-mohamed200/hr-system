@@ -48,6 +48,10 @@ const AssetsPage = () => {
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
+    if (!createForm.employee_id) {
+      toast.error('يجب اختيار الموظف الذي سيستلم العهدة');
+      return;
+    }
     try {
       await client.post('/assets', createForm);
       toast.success('تمت إضافة الأصل بنجاح');
@@ -310,14 +314,15 @@ const AssetsPage = () => {
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label className="input-label">تسليم العهدة لموظف (اختياري)</label>
+                <label className="input-label">تسليم العهدة لموظف *</label>
                 <select 
+                  required
                   value={createForm.employee_id} 
                   onChange={(e) => setCreateForm(p => ({ ...p, employee_id: e.target.value }))}
                   className="modal-input"
                   style={{ direction: 'rtl' }}
                 >
-                  <option value="">لا توجد عهدة حالياً (متوفر بالمخزن)</option>
+                  <option value="">اختر الموظف المستلم...</option>
                   {employees.map(emp => (
                     <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>
                       {emp.name} ({emp.employee_id})

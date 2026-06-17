@@ -12,10 +12,11 @@ import {
   Calendar,
   Coins,
   Wallet,
-  Package
+  Package,
+  X
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, closeSidebar }) => {
   const { user, logout } = useAuth();
 
   const roleLabels = {
@@ -41,18 +42,24 @@ const Sidebar = () => {
   const filteredItems = menuItems.filter(item => user?.role === 'ceo' || item.roles.includes(user?.role));
 
   return (
-    <aside className="sidebar" style={{ direction: 'rtl' }}>
-      <div className="logo-container" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', padding: '0 0.5rem' }}>
-        <img 
-          src={`${BACKEND_URL}/uploads/xq-logo.avif`} 
-          alt="XQ Logo" 
-          style={{ 
-            width: '100%', 
-            maxHeight: '60px', 
-            objectFit: 'contain'
-          }} 
-        />
-      </div>
+    <>
+      {isOpen && <div className="sidebar-overlay" onClick={closeSidebar}></div>}
+      <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ direction: 'rtl' }}>
+        <div className="logo-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+          <img 
+            src={`${BACKEND_URL}/uploads/xq-logo.avif`} 
+            alt="XQ Logo" 
+            style={{ 
+              width: '100%', 
+              maxWidth: '180px',
+              maxHeight: '60px', 
+              objectFit: 'contain'
+            }} 
+          />
+          <button className="close-sidebar-btn" onClick={closeSidebar}>
+            <X size={24} />
+          </button>
+        </div>
       
       <nav className="nav-links" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {filteredItems.map((item) => {
@@ -105,6 +112,7 @@ const Sidebar = () => {
         </button>
       </div>
     </aside>
+    </>
   );
 };
 

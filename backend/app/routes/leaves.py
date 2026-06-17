@@ -1,7 +1,10 @@
 # app/routes/leaves.py
 """Leave and permission request endpoints."""
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
+import os
+import uuid
+from app.config import settings
 from typing import List, Optional
 from datetime import datetime, timezone
 from app.database import leaves_col, employees_col
@@ -26,6 +29,7 @@ def _leave_to_response(doc: dict) -> LeaveResponse:
         status=doc["status"],
         created_at=doc["created_at"],
         approved_by=doc.get("approved_by"),
+        attachment_url=doc.get("attachment_url"),
     )
 
 
@@ -78,7 +82,8 @@ def request_leave(
         "duration_hours": data.duration_hours,
         "status": "pending",
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "approved_by": None
+        "approved_by": None,
+        "attachment_url": data.attachment_url
     }
     
     result = leaves_col().insert_one(doc)
@@ -97,6 +102,25 @@ def list_leaves(
         cursor = leaves_col().find({"employee_id": current_user["employee_id"]}).sort("created_at", -1)
         
     return [_leave_to_response(d) for d in cursor]
+
+
+@router.post("/upload_certificate", status_code=status.HTTP_201_CREATED)
+async def upload_leave_certificate(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Upload a medical certificate for sick leave."""
+    if current_user.get("role") == "ceo" or current_user.get("employee_id") == "EMP-7777":
+        raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى")
+        
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    filename = f"cert_{current_user['employee_id']}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(settings.UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as buffer:
+        buffer.write(await file.read())
+
+    return {"url": f"/uploads/{filename}"}
 
 
 from datetime import datetime, timedelta

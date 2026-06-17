@@ -1,4 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Menu } from 'lucide-react';
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -24,15 +26,29 @@ import './App.css';
 
 // Layout wrapper for authenticated pages
 const AppLayout = ({ children }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
     <div className="app-container">
-      <Sidebar />
-      <main className="main-content" style={{ width: '100%', direction: 'rtl' }}>
-        {children}
-      </main>
+      <Sidebar isOpen={isSidebarOpen} closeSidebar={() => setIsSidebarOpen(false)} />
+      
+      <div className="layout-content-wrapper">
+        {/* Mobile Top Bar */}
+        <div className="mobile-topbar">
+          <button onClick={() => setIsSidebarOpen(true)} className="menu-toggle-btn">
+            <Menu size={24} />
+          </button>
+          <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--primary)' }}>XQ HR</span>
+        </div>
+
+        <main className="main-content" style={{ width: '100%', direction: 'rtl' }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 };
+
 
 import { Toaster } from 'react-hot-toast';
 

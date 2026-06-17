@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import client from '../api/client';
+import client, { BACKEND_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { 
   Calendar, 
@@ -29,6 +29,7 @@ const LeavesPage = () => {
     reason: '',
     duration_hours: ''
   });
+  const [certificateFile, setCertificateFile] = useState(null);
 
   const fetchLeaves = async () => {
     try {
@@ -61,6 +62,20 @@ const LeavesPage = () => {
       if (payload.leave_type !== 'permission') {
         payload.duration_hours = null;
       }
+      
+      if (payload.leave_type === 'sick') {
+        if (!certificateFile) {
+          alert('يجب رفع صورة الشهادة المرضية أولاً.');
+          return;
+        }
+        const uploadData = new FormData();
+        uploadData.append('file', certificateFile);
+        const uploadRes = await client.post('/leaves/upload_certificate', uploadData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        payload.attachment_url = uploadRes.data.url;
+      }
+
       await client.post('/leaves', payload);
       setModalOpen(false);
       setFormData({
@@ -70,6 +85,7 @@ const LeavesPage = () => {
         reason: '',
         duration_hours: ''
       });
+      setCertificateFile(null);
       fetchLeaves();
     } catch (err) {
       alert(err.response?.data?.detail || 'حدث خطأ أثناء تقديم الطلب');
@@ -186,7 +202,17 @@ const LeavesPage = () => {
                   <td style={{ textAlign: 'right' }}>{rec.start_date}</td>
                   <td style={{ textAlign: 'right' }}>{rec.end_date}</td>
                   <td style={{ textAlign: 'right' }}>{rec.duration_hours ? `${rec.duration_hours} ساعة` : '-'}</td>
-                  <td style={{ textAlign: 'right' }}>{rec.reason}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div>{rec.reason}</div>
+                    {rec.attachment_url && (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <a href={`${BACKEND_URL}${rec.attachment_url}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: 'var(--primary)', textDecoration: 'none' }}>
+                          <FileText size={14} />
+                          عرض الشهادة
+                        </a>
+                      </div>
+                    )}
+                  </td>
                   <td style={{ textAlign: 'right' }}>
                     <span style={{
                       padding: '2px 8px',
@@ -330,6 +356,19 @@ const LeavesPage = () => {
                   style={{ minHeight: '80px', resize: 'vertical' }}
                 />
               </div>
+
+              {formData.leave_type === 'sick' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label className="input-label">صورة الشهادة المرضية *</label>
+                  <input 
+                    type="file" 
+                    required
+                    accept="image/*,.pdf"
+                    onChange={(e) => setCertificateFile(e.target.files[0])} 
+                    className="modal-input" 
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"
