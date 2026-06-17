@@ -99,6 +99,7 @@ const AttendancePage = () => {
   });
   const [calendarRecords, setCalendarRecords] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [selectedDayDetails, setSelectedDayDetails] = useState(null);
   
   // Filters
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -184,6 +185,10 @@ const AttendancePage = () => {
       fetchCalendarAttendance();
     }
   }, [selectedCalendarEmp, calendarMonth, viewMode]);
+
+  useEffect(() => {
+    setSelectedDayDetails(null);
+  }, [calendarMonth, selectedCalendarEmp]);
 
   const handleManualAction = async (e) => {
     e.preventDefault();
@@ -473,14 +478,28 @@ const AttendancePage = () => {
     const holidays = getEgyptianHolidays(calendarYear);
     const daysArray = getDaysArray(calendarYear, calendarMonthIndex);
 
-    const weekdays = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+    const arabicMonths = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+
+    const weekdays = [
+      { full: 'السبت', short: 'سبت' },
+      { full: 'الأحد', short: 'أحد' },
+      { full: 'الاثنين', short: 'إثن' },
+      { full: 'الثلاثاء', short: 'ثلا' },
+      { full: 'الأربعاء', short: 'أرب' },
+      { full: 'الخميس', short: 'خميس' },
+      { full: 'الجمعة', short: 'جمع' }
+    ];
     
     return (
       <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
           {weekdays.map(day => (
-            <div key={day} style={{ fontWeight: '700', color: 'var(--text-dim)', paddingBottom: '0.75rem', borderBottom: '2px solid var(--glass-border)' }}>
-              {day}
+            <div key={day.full} className="calendar-weekday-header" style={{ fontWeight: '700', color: 'var(--text-dim)', paddingBottom: '0.75rem', borderBottom: '2px solid var(--glass-border)' }}>
+              <span className="desktop-weekday">{day.full}</span>
+              <span className="mobile-weekday">{day.short}</span>
             </div>
           ))}
         </div>
@@ -527,6 +546,9 @@ const AttendancePage = () => {
 
               if (isToday) {
                 borderStyle = '2.5px solid var(--primary)';
+              }
+              if (selectedDayDetails?.date === fullDateStr) {
+                borderStyle = '2.5px solid var(--accent)';
               }
 
               if (isFuture) {
@@ -595,24 +617,59 @@ const AttendancePage = () => {
               return (
                 <div
                   key={`day-${d}`}
+                  onClick={() => {
+                    let statusColor = 'var(--text-dim)';
+                    let statusText = 'غياب';
+                    if (holidayName) {
+                      statusColor = '#fda4af';
+                      statusText = `إجازة رسمية: ${holidayName}`;
+                    } else if (record) {
+                      if (record.status === 'on_time') {
+                        statusColor = 'var(--accent)';
+                        statusText = 'حاضر في الموعد';
+                      } else if (record.status === 'late') {
+                        statusColor = '#fbbf24';
+                        statusText = 'متأخر';
+                      } else if (record.status === 'absent') {
+                        statusColor = '#fca5a5';
+                        statusText = 'غياب';
+                      } else if (record.status === 'leave') {
+                        statusColor = '#93c5fd';
+                        statusText = 'إجازة معتمدة';
+                      } else if (record.status === 'mission') {
+                        statusColor = '#d8b4fe';
+                        statusText = 'مأمورية عمل';
+                      } else {
+                        statusColor = 'var(--text-dim)';
+                        statusText = translateStatus(record.status);
+                      }
+                    } else if (isWeekendDay) {
+                      statusColor = 'var(--text-dim)';
+                      statusText = 'عطلة أسبوعية';
+                    }
+
+                    const arabicDate = `${d} ${arabicMonths[calendarMonthIndex]} ${calendarYear}`;
+
+                    setSelectedDayDetails({
+                      date: fullDateStr,
+                      formattedDate: arabicDate,
+                      statusText,
+                      statusColor,
+                      checkIn: record?.check_in,
+                      checkOut: record?.check_out,
+                      hours: record?.hours_worked,
+                      notes: record?.notes || (holidayName ? 'إجازة رسمية وفقاً لقانون العمل المصري' : isWeekendDay ? 'عطلة أسبوعية للموظف' : '')
+                    });
+                  }}
                   style={{
                     background: cellBg,
                     border: borderStyle,
-                    borderRadius: '8px',
-                    padding: '0.6rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    minHeight: '90px',
-                    transition: 'all 0.2s ease',
-                    cursor: 'default',
-                    position: 'relative',
                     boxShadow: isToday ? '0 0 10px rgba(79, 70, 229, 0.3)' : 'none'
                   }}
-                  className="calendar-cell-hover"
+                  className={`calendar-cell-wrapper calendar-cell-hover ${selectedDayDetails?.date === fullDateStr ? 'calendar-cell-selected' : ''}`}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <span style={{ 
+                    <span className="calendar-day-header" style={{ 
                       fontWeight: '700', 
                       fontSize: '0.95rem', 
                       color: isToday ? 'var(--primary)' : 'var(--text-main)',
@@ -627,12 +684,25 @@ const AttendancePage = () => {
                       {d}
                     </span>
                     {isToday && (
-                      <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--primary)' }}>اليوم</span>
+                      <span className="calendar-cell-text" style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--primary)' }}>اليوم</span>
                     )}
                   </div>
+
+                  {badgeText && (
+                    <span 
+                      className="calendar-cell-dot" 
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: badgeColor || 'var(--text-dim)',
+                        marginTop: '4px'
+                      }} 
+                    />
+                  )}
                   
                   {badgeText && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '0.5rem', width: '100%' }}>
+                    <div className="calendar-cell-text" style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '0.5rem', width: '100%' }}>
                       <span style={{
                         padding: '2px 6px',
                         borderRadius: '6px',
@@ -649,7 +719,7 @@ const AttendancePage = () => {
                         {badgeText}
                       </span>
                       {badgeTime && (
-                        <span style={{
+                        <span className="calendar-cell-time" style={{
                           fontSize: '0.65rem',
                           color: 'var(--text-dim)',
                           textAlign: 'center',
@@ -669,6 +739,86 @@ const AttendancePage = () => {
             })
           )}
         </div>
+
+        {/* Selected Day Details Panel */}
+        {selectedDayDetails && (
+          <div 
+            style={{ 
+              marginTop: '1rem', 
+              padding: '1.25rem', 
+              borderRadius: '12px',
+              border: '1px solid var(--primary)', 
+              background: 'rgba(14, 165, 233, 0.05)', 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+              animation: 'fadeIn 0.2s ease-in-out'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '1rem' }}>
+                تفاصيل الحضور ليوم: {selectedDayDetails.formattedDate}
+              </h4>
+              <button 
+                onClick={() => setSelectedDayDetails(null)}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: 'var(--text-dim)', 
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem'
+                }}
+              >
+                إغلاق ✕
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', textAlign: 'right' }}>
+              <div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '2px' }}>الحالة:</span>
+                <span style={{ 
+                  fontWeight: '700', 
+                  color: selectedDayDetails.statusColor || 'var(--text-main)',
+                  fontSize: '0.95rem'
+                }}>
+                  {selectedDayDetails.statusText}
+                </span>
+              </div>
+              {selectedDayDetails.checkIn && (
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '2px' }}>وقت الحضور:</span>
+                  <span style={{ fontWeight: '700', color: 'var(--accent)', direction: 'ltr', display: 'inline-block' }}>
+                    {selectedDayDetails.checkIn}
+                  </span>
+                </div>
+              )}
+              {selectedDayDetails.checkOut && (
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '2px' }}>وقت الانصراف:</span>
+                  <span style={{ fontWeight: '700', color: '#60a5fa', direction: 'ltr', display: 'inline-block' }}>
+                    {selectedDayDetails.checkOut}
+                  </span>
+                </div>
+              )}
+              {selectedDayDetails.hours !== null && selectedDayDetails.hours !== undefined && (
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '2px' }}>ساعات العمل:</span>
+                  <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>
+                    {selectedDayDetails.hours} ساعة
+                  </span>
+                </div>
+              )}
+              {selectedDayDetails.notes && (
+                <div style={{ gridColumn: 'span 2' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '2px' }}>ملاحظات:</span>
+                  <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                    {selectedDayDetails.notes}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--glass-border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -904,7 +1054,7 @@ const AttendancePage = () => {
       {viewMode === 'table' ? (
         <>
           {/* Filter Bar */}
-          <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem', padding: '1rem', alignItems: 'center' }}>
+          <div className="card filter-bar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1rem', padding: '1rem', alignItems: 'center' }}>
             {(isAdminOrHr || isCeo) ? (
               <>
                 <div style={{ gridColumn: 'span 4', position: 'relative' }}>
@@ -1172,6 +1322,22 @@ const AttendancePage = () => {
         .table-row:hover {
           background: rgba(0, 39, 73, 0.01);
         }
+        .calendar-cell-wrapper {
+          min-height: 90px;
+          padding: 0.6rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          border-radius: 8px;
+          border: 1px solid var(--glass-border);
+          transition: all 0.2s ease-in-out;
+          cursor: pointer;
+          position: relative;
+        }
+        .calendar-cell-selected {
+          border-color: var(--accent) !important;
+          box-shadow: 0 0 12px rgba(16, 185, 129, 0.25) !important;
+        }
         .calendar-cell-hover {
           transition: all 0.2s ease-in-out;
         }
@@ -1180,6 +1346,62 @@ const AttendancePage = () => {
           box-shadow: 0 6px 16px rgba(0, 39, 73, 0.08);
           border-color: var(--primary) !important;
           background: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        /* Desktop vs Mobile Calendar Layout */
+        @media (max-width: 768px) {
+          .calendar-cell-text {
+            display: none !important;
+          }
+          .calendar-cell-time {
+            display: none !important;
+          }
+          .calendar-cell-dot {
+            display: inline-block !important;
+          }
+          .calendar-cell-wrapper {
+            min-height: 60px !important;
+            padding: 0.3rem !important;
+            justify-content: center !important;
+            align-items: center !important;
+          }
+          .calendar-day-header {
+            font-size: 0.8rem !important;
+          }
+          .calendar-weekday-header {
+            font-size: 0.75rem !important;
+            padding-bottom: 0.4rem !important;
+          }
+          .desktop-weekday {
+            display: none !important;
+          }
+          .mobile-weekday {
+            display: inline !important;
+          }
+
+          /* Filter Bar responsiveness */
+          .filter-bar-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+            align-items: stretch !important;
+          }
+          .filter-bar-grid > div,
+          .filter-bar-grid > select {
+            grid-column: span 12 !important;
+            width: 100% !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .calendar-cell-dot {
+            display: none !important;
+          }
+          .desktop-weekday {
+            display: inline !important;
+          }
+          .mobile-weekday {
+            display: none !important;
+          }
         }
       `}</style>
     </div>
