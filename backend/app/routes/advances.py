@@ -1,13 +1,14 @@
 # app/routes/advances.py
 """Salary advance request endpoints."""
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status  # pyrefly: ignore [missing-import] 
+
 from typing import List
 from datetime import datetime, timezone
 from app.database import advances_col, employees_col
 from app.auth import get_current_user, require_role
 from app.models.advance import AdvanceCreate, AdvanceResponse, AdvanceUpdateStatus
-from bson import ObjectId
+from bson import ObjectId  # pyrefly: ignore [missing-import]
 
 router = APIRouter(prefix="/api/advances", tags=["Advances"])
 
