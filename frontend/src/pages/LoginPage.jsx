@@ -102,7 +102,7 @@ const LoginPage = () => {
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <img 
-            src={`${BACKEND_URL}/uploads/xq-logo.avif`} 
+            src={`${BACKEND_URL}/uploads/xq-logo.avif?v=2`} 
             alt="XQ Logo" 
             style={{ 
               width: '160px', 

@@ -36,6 +36,8 @@ def _ensure_indexes():
     db.employees.create_index("employee_id", unique=True)
     db.employees.create_index("email", unique=True)
     db.employees.create_index("department")
+    # Biometric ID — unique sparse index to prevent two employees sharing the same device ID
+    db.employees.create_index("biometric_id", unique=True, sparse=True)
 
     # Attendance — compound index for fast lookups
     db.attendance.create_index([("employee_id", 1), ("date", -1)])
@@ -56,6 +58,10 @@ def _ensure_indexes():
 
     # OTP — automatic expiration using TTL index
     db.otp.create_index("created_at", expireAfterSeconds=300)
+
+    # Notifications indexes
+    db.notifications.create_index([("recipient_id", 1), ("created_at", -1)])
+    db.notifications.create_index([("recipient_role", 1), ("created_at", -1)])
 
 
 # Collection accessors for convenience
@@ -101,3 +107,12 @@ def payrolls_col():
 
 def otp_col():
     return get_db().otp
+
+
+def notifications_col():
+    return get_db().notifications
+
+
+def biometric_sync_log_col():
+    return get_db().biometric_sync_log
+

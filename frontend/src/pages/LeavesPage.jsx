@@ -9,7 +9,8 @@ import {
   X, 
   FileText,
   AlertCircle,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 
 const LeavesPage = () => {
@@ -104,6 +105,17 @@ const LeavesPage = () => {
     }
   };
 
+  const handleDeleteLeave = async (id) => {
+    if (window.confirm('هل أنت متأكد من رغبتك في حذف هذا الطلب نهائياً؟')) {
+      try {
+        await client.delete(`/leaves/${id}`);
+        fetchLeaves();
+      } catch (err) {
+        alert(err.response?.data?.detail || 'فشلت عملية الحذف');
+      }
+    }
+  };
+
   const translateType = (type) => {
     const map = {
       casual: 'عارضة',
@@ -127,7 +139,7 @@ const LeavesPage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', direction: 'rtl' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Header title="الإجازات والأذونات والمأموريات" />
+        <Header title="الإجازات" />
         {!isCeo && (
           <button 
             onClick={() => setModalOpen(true)}
@@ -149,25 +161,6 @@ const LeavesPage = () => {
             <span>تقديم طلب جديد</span>
           </button>
         )}
-      </div>
-
-      {/* Info Alert about permission limits */}
-      <div style={{ 
-        background: 'rgba(79, 70, 229, 0.04)', 
-        border: '1px solid var(--glass-border)', 
-        padding: '1rem', 
-        borderRadius: '12px', 
-        color: 'var(--primary)',
-        fontSize: '0.85rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        textAlign: 'right'
-      }}>
-        <AlertCircle size={18} style={{ flexShrink: 0 }} />
-        <div>
-          <strong>تعليمات الأذونات:</strong> الحد الأقصى لأذونات الغياب القصيرة (الصباحية أو المسائية) هو <strong>٤ ساعات شهرياً</strong>. عند اعتماد الأذن أو المأمورية، يقوم النظام تلقائياً بتعديل سجل الحضور لإلغاء أي غياب أو تأخير ناتج عنها.
-        </div>
       </div>
 
       {/* Leaves Logs Table */}
@@ -227,25 +220,47 @@ const LeavesPage = () => {
                   </td>
                   {isAdminOrHr && (
                     <td style={{ textAlign: 'left', paddingLeft: '1.5rem' }}>
-                      {rec.status === 'pending' ? (
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-start' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-start', alignItems: 'center' }}>
+                        {rec.status === 'pending' ? (
+                          <>
+                            <button 
+                              onClick={() => handleUpdateStatus(rec.id, 'approved')}
+                              title="اعتماد"
+                              style={{
+                                background: 'rgba(34, 197, 94, 0.1)',
+                                border: '1px solid rgba(34, 197, 94, 0.2)',
+                                color: 'var(--accent)',
+                                padding: '0.4rem',
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateStatus(rec.id, 'rejected')}
+                              title="رفض"
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                color: '#f87171',
+                                padding: '0.4rem',
+                                borderRadius: '6px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                            بواسطة {rec.approved_by?.split('@')[0]}
+                          </span>
+                        )}
+                        {user?.role === 'admin' && (
                           <button 
-                            onClick={() => handleUpdateStatus(rec.id, 'approved')}
-                            title="اعتماد"
-                            style={{
-                              background: 'rgba(34, 197, 94, 0.1)',
-                              border: '1px solid rgba(34, 197, 94, 0.2)',
-                              color: 'var(--accent)',
-                              padding: '0.4rem',
-                              borderRadius: '6px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <Check size={14} />
-                          </button>
-                          <button 
-                            onClick={() => handleUpdateStatus(rec.id, 'rejected')}
-                            title="رفض"
+                            onClick={() => handleDeleteLeave(rec.id)}
+                            title="حذف الطلب"
                             style={{
                               background: 'rgba(239, 68, 68, 0.1)',
                               border: '1px solid rgba(239, 68, 68, 0.2)',
@@ -255,14 +270,10 @@ const LeavesPage = () => {
                               cursor: 'pointer'
                             }}
                           >
-                            <X size={14} />
+                            <Trash2 size={14} />
                           </button>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-                          بواسطة {rec.approved_by?.split('@')[0]}
-                        </span>
-                      )}
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -283,7 +294,7 @@ const LeavesPage = () => {
               <X size={20} />
             </button>
 
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-main)' }}>تقديم طلب إجازة / إذن / مأمورية</h3>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: 'var(--text-main)' }}>تقديم طلب إجازة</h3>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -298,8 +309,6 @@ const LeavesPage = () => {
                   <option value="casual" style={{ background: 'var(--bg-card)' }}>إجازة عارضة</option>
                   <option value="annual" style={{ background: 'var(--bg-card)' }}>إجازة سنوية</option>
                   <option value="sick" style={{ background: 'var(--bg-card)' }}>إجازة مرضية</option>
-                  <option value="permission" style={{ background: 'var(--bg-card)' }}>إذن غياب قصير (ساعاتي)</option>
-                  <option value="mission" style={{ background: 'var(--bg-card)' }}>مأمورية عمل خارجية</option>
                 </select>
               </div>
 
@@ -327,22 +336,6 @@ const LeavesPage = () => {
                   />
                 </div>
               </div>
-
-              {formData.leave_type === 'permission' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label className="input-label">المدة بالساعات (بحد أقصى ٤ ساعات شهرياً) *</label>
-                  <input 
-                    type="number" 
-                    step="0.5"
-                    name="duration_hours" 
-                    required 
-                    placeholder="مثال: 2"
-                    value={formData.duration_hours} 
-                    onChange={handleInputChange} 
-                    className="modal-input" 
-                  />
-                </div>
-              )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <label className="input-label">السبب أو الوصف *</label>

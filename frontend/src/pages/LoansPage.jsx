@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Coins, Check, X, FileText, Plus, Landmark, DollarSign, Calendar } from 'lucide-react';
+import { Coins, Check, X, FileText, Plus, Landmark, DollarSign, Calendar, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const LoansPage = () => {
@@ -68,9 +68,9 @@ const LoansPage = () => {
     const salary = employeeProfile.salary || 0;
     const amountVal = parseFloat(advanceForm.amount);
     
-    // Constraint check: Max 50% of basic salary
-    if (amountVal > salary * 0.5) {
-      toast.error(`عذراً! الحد الأقصى للسلفة المؤقتة هو 50% من راتبك الأساسي (الأقصى لك: ${salary * 0.5} ج.م)`);
+    // Constraint check: Max 75% of basic salary
+    if (amountVal > salary * 0.75) {
+      toast.error(`عذراً! الحد الأقصى للسلفة المؤقتة هو 75% من راتبك الأساسي (الأقصى لك: ${salary * 0.75} ج.م)`);
       return;
     }
 
@@ -133,6 +133,30 @@ const LoansPage = () => {
         fetchData();
       } catch (err) {
         toast.error('فشلت العملية');
+      }
+    }
+  };
+
+  const handleDeleteAdvance = async (id) => {
+    if (window.confirm('هل أنت متأكد من رغبتك في حذف طلب السلفة هذا نهائياً؟')) {
+      try {
+        await client.delete(`/advances/${id}`);
+        toast.success('تم حذف طلب السلفة بنجاح');
+        fetchData();
+      } catch (err) {
+        toast.error(err.response?.data?.detail || 'فشلت عملية الحذف');
+      }
+    }
+  };
+
+  const handleDeleteLoan = async (id) => {
+    if (window.confirm('هل أنت متأكد من رغبتك في حذف طلب القرض هذا نهائياً؟')) {
+      try {
+        await client.delete(`/loans/${id}`);
+        toast.success('تم حذف طلب القرض بنجاح');
+        fetchData();
+      } catch (err) {
+        toast.error(err.response?.data?.detail || 'فشلت عملية الحذف');
       }
     }
   };
@@ -268,24 +292,45 @@ const LoansPage = () => {
                     </td>
                     {isAdminOrHr && (
                       <td style={{ textAlign: 'left', paddingLeft: '1.5rem' }}>
-                        {rec.status === 'pending' ? (
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'flex-end' }}>
+                          {rec.status === 'pending' ? (
+                            <>
+                              <button 
+                                onClick={() => handleUpdateAdvanceStatus(rec.id, 'approved')}
+                                style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: 'var(--accent)', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                              >
+                                موافقة
+                              </button>
+                              <button 
+                                onClick={() => handleUpdateAdvanceStatus(rec.id, 'rejected')}
+                                style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                              >
+                                رفض
+                              </button>
+                            </>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>معتمد من {rec.approved_by?.split('@')[0]}</span>
+                          )}
+                          {user?.role === 'admin' && (
                             <button 
-                              onClick={() => handleUpdateAdvanceStatus(rec.id, 'approved')}
-                              style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: 'var(--accent)', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                              onClick={() => handleDeleteAdvance(rec.id)}
+                              title="حذف الطلب"
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                color: '#f87171',
+                                padding: '0.3rem 0.5rem',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
                             >
-                              موافقة
+                              <Trash2 size={14} />
                             </button>
-                            <button 
-                              onClick={() => handleUpdateAdvanceStatus(rec.id, 'rejected')}
-                              style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
-                            >
-                              رفض
-                            </button>
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>معتمد من {rec.approved_by?.split('@')[0]}</span>
-                        )}
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -345,24 +390,45 @@ const LoansPage = () => {
                     </td>
                     {isAdminOrHr && (
                       <td style={{ textAlign: 'left', paddingLeft: '1.5rem' }}>
-                        {rec.status === 'pending' ? (
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'flex-end' }}>
+                          {rec.status === 'pending' ? (
+                            <>
+                              <button 
+                                onClick={() => handleUpdateLoanStatus(rec.id, 'approved')}
+                                style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: 'var(--accent)', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                              >
+                                موافقة
+                              </button>
+                              <button 
+                                onClick={() => handleUpdateLoanStatus(rec.id, 'rejected')}
+                                style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                              >
+                                رفض
+                              </button>
+                            </>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>معتمد من {rec.approved_by?.split('@')[0]}</span>
+                          )}
+                          {user?.role === 'admin' && (
                             <button 
-                              onClick={() => handleUpdateLoanStatus(rec.id, 'approved')}
-                              style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: 'var(--accent)', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
+                              onClick={() => handleDeleteLoan(rec.id)}
+                              title="حذف الطلب"
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                color: '#f87171',
+                                padding: '0.3rem 0.5rem',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
                             >
-                              موافقة
+                              <Trash2 size={14} />
                             </button>
-                            <button 
-                              onClick={() => handleUpdateLoanStatus(rec.id, 'rejected')}
-                              style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '0.3rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}
-                            >
-                              رفض
-                            </button>
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>معتمد من {rec.approved_by?.split('@')[0]}</span>
-                        )}
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -381,8 +447,8 @@ const LoansPage = () => {
               <X size={20} />
             </button>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: 'var(--text-main)' }}>تقديم طلب سلفة مؤقتة</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '1.5rem' }}>
-              * السلفة المؤقتة تُخصم بالكامل تلقائياً من راتب نفس الشهر. الحد الأقصى المسموح به هو 50% من راتبك الأساسي.
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '1rem' }}>
+              * السلفة المؤقتة تُخصم بالكامل تلقائياً من راتب نفس الشهر. الحد الأقصى المسموح به هو 75% من راتبك الأساسي.
             </p>
             <form onSubmit={handleAdvanceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>

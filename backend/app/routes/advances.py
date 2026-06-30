@@ -9,6 +9,9 @@ from app.database import advances_col, employees_col
 from app.auth import get_current_user, require_role
 from app.models.advance import AdvanceCreate, AdvanceResponse, AdvanceUpdateStatus
 from bson import ObjectId  # pyrefly: ignore [missing-import]
+from app.config import settings
+from app.services.email import send_manager_request_notification
+from app.services.notifications import create_notification
 
 router = APIRouter(prefix="/api/advances", tags=["Advances"])
 
@@ -61,6 +64,37 @@ def request_advance(
     
     result = advances_col().insert_one(doc)
     doc["_id"] = result.inserted_id
+
+    # Trigger Notifications (Email & In-app)
+    try:
+        review_link = f"{settings.FRONTEND_URL}/advances"
+        request_type_display = "Salary Advance (سلفة راتب)"
+        date_str = doc["created_at"][:10]
+        send_manager_request_notification(
+            employee_name=doc["employee_name"],
+            request_type=request_type_display,
+            date_of_request=date_str,
+            review_link=review_link
+        )
+        # Admin notification
+        create_notification(
+            recipient_role="admin",
+            title="طلب سلفة راتب جديد",
+            message=f"قام الموظف {doc['employee_name']} بتقديم طلب سلفة راتب بقيمة {doc['amount']} ج.م بتاريخ {date_str}.",
+            request_type="advance",
+            request_id=str(doc["_id"])
+        )
+        # Employee notification
+        create_notification(
+            recipient_id=doc["employee_id"],
+            title="تم تقديم طلب سلفة الراتب",
+            message=f"تم تقديم طلب سلفة راتب بقيمة {doc['amount']} ج.م بنجاح وهو قيد المراجعة حالياً.",
+            request_type="advance",
+            request_id=str(doc["_id"])
+        )
+    except Exception as n_err:
+        print(f"Error sending notifications for advance request: {n_err}")
+
     return _advance_to_response(doc)
 
 
@@ -99,4 +133,38 @@ def update_advance_status(
     )
     
     updated = advances_col().find_one({"_id": oid})
+
+    # Trigger Status Update Notification (In-app)
+    try:
+        status_text = "مقبول" if data.status == "approved" else "مرفوض" if data.status == "rejected" else data.status
+        create_notification(
+            recipient_id=updated["employee_id"],
+            title="تحديث حالة طلب سلفة الراتب",
+            message=f"تم {status_text} طلب سلفة الراتب بقيمة {updated['amount']} ج.م الخاص بك بواسطة {current_user['email']}.",
+            request_type="advance",
+            request_id=str(updated["_id"])
+        )
+    except Exception as n_err:
+        print(f"Error creating status update notification: {n_err}")
+
     return _advance_to_response(updated)
+
+
+@router.delete("/{advance_id}", status_code=status.HTTP_200_OK)
+def delete_advance_request(
+    advance_id: str,
+    current_user: dict = Depends(require_role("admin")),
+):
+    """Delete a salary advance request. Admin only."""
+    try:
+        oid = ObjectId(advance_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="معرف طلب السلفة غير صحيح")
+
+    adv = advances_col().find_one({"_id": oid})
+    if not adv:
+        raise HTTPException(status_code=404, detail="طلب السلفة غير موجود")
+
+    advances_col().delete_one({"_id": oid})
+    return {"message": "تم حذف طلب السلفة بنجاح"}
+

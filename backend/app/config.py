@@ -25,6 +25,10 @@ class Settings:
     LATE_THRESHOLD_MINUTES: int = int(os.getenv("LATE_THRESHOLD_MINUTES", "15"))
     WEEKEND_DAYS: list = os.getenv("WEEKEND_DAYS", "friday").lower().split(",")
 
+    # Biometric Device
+    BIOMETRIC_DEVICE_IP: str = os.getenv("BIOMETRIC_DEVICE_IP", "192.168.1.3")
+    BIOMETRIC_DEVICE_PORT: int = int(os.getenv("BIOMETRIC_DEVICE_PORT", "4370"))
+
     # GPS Geofencing
     BRANCH_LATITUDE: float = float(os.getenv("BRANCH_LATITUDE", "30.0444"))
     BRANCH_LONGITUDE: float = float(os.getenv("BRANCH_LONGITUDE", "31.2357"))
@@ -49,6 +53,9 @@ class Settings:
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    MANAGER_NOTIF_EMAILS: str = os.getenv("MANAGER_NOTIF_EMAILS", "mahmoudb612@gmail.com,admin@xqpharma.com,hr@xqpharma.com")
+
 
     def __init__(self):
         # Build camera config from env

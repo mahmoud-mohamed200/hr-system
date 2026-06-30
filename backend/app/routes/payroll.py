@@ -56,7 +56,8 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     
     if not is_ceo:
         for r in attendance_records:
-            checked_in_dates.add(r["date"])
+            if r.get("status") in ["on_time", "late", "excused", "leave", "mission"] or r.get("check_in"):
+                checked_in_dates.add(r["date"])
                 
             # Lateness minutes
             if r.get("status") == "late" and r.get("check_in"):

@@ -100,6 +100,14 @@ def update_department(
                 detail=f"Department with name '{update_data['name']}' already exists",
             )
         employees_col().update_many({"department": dept["name"]}, {"$set": {"department": update_data["name"]}})
+        
+        # Propagate department rename to other transaction collections
+        from app.database import attendance_col, leaves_col, loans_col, advances_col, payrolls_col
+        attendance_col().update_many({"department": dept["name"]}, {"$set": {"department": update_data["name"]}})
+        leaves_col().update_many({"department": dept["name"]}, {"$set": {"department": update_data["name"]}})
+        loans_col().update_many({"department": dept["name"]}, {"$set": {"department": update_data["name"]}})
+        advances_col().update_many({"department": dept["name"]}, {"$set": {"department": update_data["name"]}})
+        payrolls_col().update_many({"department": dept["name"]}, {"$set": {"department": update_data["name"]}})
 
     departments_col().update_one({"_id": dept["_id"]}, {"$set": update_data})
     updated = departments_col().find_one({"_id": dept["_id"]})

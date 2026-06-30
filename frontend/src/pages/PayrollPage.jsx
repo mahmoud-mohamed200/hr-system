@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Header from '../components/Header';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +15,7 @@ const PayrollPage = () => {
   const [payrollRecords, setPayrollRecords] = useState([]);
   const [employeePayslips, setEmployeePayslips] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [adminViewTab, setAdminViewTab] = useState('sheet'); // 'sheet' or 'payslips'
 
   // Decryption Modal state
   const [decryptModalOpen, setDecryptModalOpen] = useState(false);
@@ -76,13 +78,40 @@ const PayrollPage = () => {
     }
   };
 
+  const fetchAllPayslips = async () => {
+    try {
+      setLoading(true);
+      const res = await client.get(`/payroll/payslips?month=${selectedMonth}`);
+      setEmployeePayslips(res.data);
+    } catch (err) {
+      console.error('Error fetching employee payslips:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isAdminOrCeo) {
       fetchEmployeePayslips();
     } else {
-      handleCalculatePayroll();
+      if (adminViewTab === 'sheet') {
+        handleCalculatePayroll();
+      } else {
+        fetchAllPayslips();
+      }
     }
-  }, [selectedMonth]);
+  }, [selectedMonth, adminViewTab]);
+
+  useEffect(() => {
+    if (decryptedPayslip) {
+      document.body.classList.add('has-print-area');
+    } else {
+      document.body.classList.remove('has-print-area');
+    }
+    return () => {
+      document.body.classList.remove('has-print-area');
+    };
+  }, [decryptedPayslip]);
 
   const handlePrint = () => {
     window.print();
@@ -150,7 +179,40 @@ const PayrollPage = () => {
         )}
       </div>
 
-      {isAdminOrCeo ? (
+      {isAdminOrCeo && (
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--glass-border)', gap: '1rem', marginBottom: '1.5rem' }}>
+          <button 
+            onClick={() => setAdminViewTab('sheet')}
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: adminViewTab === 'sheet' ? '2px solid var(--primary)' : 'none',
+              color: adminViewTab === 'sheet' ? 'var(--primary)' : 'var(--text-dim)',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            مسير الرواتب العام
+          </button>
+          <button 
+            onClick={() => setAdminViewTab('payslips')}
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: adminViewTab === 'payslips' ? '2px solid var(--primary)' : 'none',
+              color: adminViewTab === 'payslips' ? 'var(--primary)' : 'var(--text-dim)',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            إيصالات مفردات المرتب الفردية
+          </button>
+        </div>
+      )}
+
+      {isAdminOrCeo && adminViewTab === 'sheet' ? (
         /* ADMIN/CEO PAYROLL SHEET VIEW */
         <div className="card" style={{ padding: 0 }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -218,6 +280,8 @@ const PayrollPage = () => {
                 <thead>
                   <tr>
                     <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>الشهر</th>
+                    {isAdminOrCeo && <th style={{ textAlign: 'right' }}>كود الموظف</th>}
+                    {isAdminOrCeo && <th style={{ textAlign: 'right' }}>الموظف</th>}
                     <th style={{ textAlign: 'right' }}>المسمى الوظيفي</th>
                     <th style={{ textAlign: 'right' }}>القسم</th>
                     <th style={{ textAlign: 'right' }}>صافي المرتب المستلم</th>
@@ -228,6 +292,8 @@ const PayrollPage = () => {
                   {employeePayslips.map(slip => (
                     <tr key={slip.id} className="table-row">
                       <td style={{ paddingRight: '1.5rem', fontWeight: 600, color: 'var(--primary)', textAlign: 'right' }}>{slip.month}</td>
+                      {isAdminOrCeo && <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-dim)' }}>{slip.employee_id}</td>}
+                      {isAdminOrCeo && <td style={{ textAlign: 'right', fontWeight: 600 }}>{slip.employee_name}</td>}
                       <td style={{ textAlign: 'right' }}>{slip.job_title}</td>
                       <td style={{ textAlign: 'right' }}>{slip.department}</td>
                       <td style={{ textAlign: 'right', fontWeight: 'bold', color: 'var(--accent)' }}>{slip.net_salary} ج.م</td>
@@ -441,29 +507,141 @@ const PayrollPage = () => {
         </div>
       )}
 
+      {decryptedPayslip && createPortal(
+        <div id="print-area-portal">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #cbd5e1', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.3rem', color: '#000000', fontWeight: 'bold' }}>إيصال مفردات راتب رقمي</h2>
+              <p style={{ fontSize: '0.85rem', color: '#0f172a' }}>إكس كيو فارما (ش.م.م)</p>
+            </div>
+            <span style={{ padding: '4px 10px', background: 'rgba(34, 197, 94, 0.1)', color: '#059669', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>معتمد ومغلق</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '0.85rem', marginBottom: '1.5rem', color: '#000000' }}>
+            <div><strong>اسم الموظف:</strong> {decryptedPayslip.employee_name}</div>
+            <div><strong>كود الموظف:</strong> {decryptedPayslip.employee_id}</div>
+            <div><strong>القسم الإداري:</strong> {decryptedPayslip.department}</div>
+            <div><strong>عن شهر:</strong> {decryptedPayslip.month}</div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem', color: '#000000' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
+              <span>الراتب الأساسي</span>
+              <span style={{ fontWeight: 'bold' }}>{decryptedPayslip.basic_salary} ج.م</span>
+            </div>
+
+            {decryptedPayslip.deductions_unjustified_absence > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
+                <span>خصم أيام الغياب غير المبررة</span>
+                <span>-{decryptedPayslip.deductions_unjustified_absence} ج.م</span>
+              </div>
+            )}
+
+            {decryptedPayslip.deductions_lateness > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
+                <span>خصم دقائق التأخير عن المواعيد</span>
+                <span>-{decryptedPayslip.deductions_lateness} ج.م</span>
+              </div>
+            )}
+
+            {decryptedPayslip.deductions_loans > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
+                <span>خصم قسط القرض الشهري المجدول</span>
+                <span>-{decryptedPayslip.deductions_loans} ج.م</span>
+              </div>
+            )}
+
+            {decryptedPayslip.deductions_advances > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
+                <span>خصم السلفة المؤقتة المسحوبة</span>
+                <span>-{decryptedPayslip.deductions_advances} ج.م</span>
+              </div>
+            )}
+
+            {decryptedPayslip.deductions_penalties > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
+                <span>خصم الجزاءات الإدارية الصادرة</span>
+                <span>-{decryptedPayslip.deductions_penalties} ج.م</span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #0f172a', paddingTop: '1rem', marginTop: '1rem', fontSize: '1.15rem' }}>
+              <span>صافي المرتب المستلم</span>
+              <span style={{ fontWeight: '800', color: '#0f172a' }}>{decryptedPayslip.net_salary} ج.م</span>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       <style>{`
+        #print-area-portal {
+          display: none;
+        }
         .table-row:hover {
           background: rgba(0, 39, 73, 0.01);
         }
         @media print {
-          body * {
-            visibility: hidden;
+          :root {
+            --text-main: #000000 !important;
+            --text-dim: #374151 !important;
+            --primary: #0f172a !important;
+            --accent: #059669 !important;
+            --danger: #dc2626 !important;
+            --glass-border: #cbd5e1 !important;
+            --bg-dark: #ffffff !important;
+            --bg-card: #ffffff !important;
           }
-          #print-area, #print-area * {
-            visibility: visible;
+          
+          body {
+            background: white !important;
+            color: black !important;
           }
-          #print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            direction: rtl;
-            background: white;
-            color: black;
-            padding: 2rem;
+          
+          .sidebar, .nav-links, .logout-btn, button, input, select, .mobile-topbar {
+            display: none !important;
           }
-          #print-area button {
-            display: none;
+          
+          .app-container, .layout-content-wrapper, .main-content {
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          
+          .card {
+            background: white !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+          
+          .data-table {
+            color: black !important;
+            border-collapse: collapse !important;
+            width: 100% !important;
+          }
+          
+          .data-table th, .data-table td {
+            border-bottom: 1px solid #cbd5e1 !important;
+            color: black !important;
+            padding: 0.5rem !important;
+          }
+
+          body.has-print-area #root {
+            display: none !important;
+          }
+          
+          body.has-print-area #print-area-portal {
+            display: block !important;
+            background: white !important;
+            color: black !important;
+            width: 100% !important;
+            height: auto !important;
+            direction: rtl !important;
+            text-align: right !important;
+            padding: 2rem !important;
           }
         }
       `}</style>

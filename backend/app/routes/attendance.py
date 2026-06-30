@@ -4,8 +4,8 @@
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import Optional
-from app.database import attendance_col, employees_col
-from app.auth import get_current_user, require_role
+from app.database import attendance_col, employees_col, users_col, departments_col
+from app.auth import get_current_user, require_role, hash_password
 from app.models.attendance import (
     AttendanceRecord, AttendanceCheckIn, AttendanceCheckOut,
     AttendanceListResponse, TodaySummary,
@@ -83,7 +83,7 @@ def get_today_summary(current_user: dict = Depends(get_current_user)):
     })
     today_records = list(attendance_col().find({"date": today, "employee_id": {"$ne": "EMP-7777"}}))
 
-    present = len(today_records)
+    present = sum(1 for r in today_records if r.get("status") in ["on_time", "late", "excused"])
     late = sum(1 for r in today_records if r.get("status") == "late")
     on_time = sum(1 for r in today_records if r.get("status") == "on_time")
     not_checked_out = sum(1 for r in today_records if r.get("check_in") and not r.get("check_out"))
@@ -171,6 +171,7 @@ def manual_check_in(
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
     """Manually check in an employee."""
+    raise HTTPException(status_code=400, detail="التسجيل متاح فقط من خلال جهاز البصمة")
     emp = employees_col().find_one({"employee_id": data.employee_id})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -220,6 +221,7 @@ def manual_check_out(
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
     """Manually check out an employee."""
+    raise HTTPException(status_code=400, detail="التسجيل متاح فقط من خلال جهاز البصمة")
     if data.employee_id == "EMP-7777":
         raise HTTPException(status_code=400, detail="الرئيس التنفيذي مستثنى من نظام الحضور والانصراف")
     today = _get_today_str()
@@ -250,6 +252,7 @@ def self_check_in(
     current_user: dict = Depends(get_current_user),
 ):
     """Allow any employee to manually check themselves in."""
+    raise HTTPException(status_code=400, detail="التسجيل متاح فقط من خلال جهاز البصمة")
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
@@ -302,6 +305,7 @@ def self_check_out(
     current_user: dict = Depends(get_current_user),
 ):
     """Allow any employee to manually check themselves out."""
+    raise HTTPException(status_code=400, detail="التسجيل متاح فقط من خلال جهاز البصمة")
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
@@ -332,7 +336,6 @@ def self_check_out(
 
 
 import math
-import random
 from pydantic import BaseModel
 
 class GPSCheckRequest(BaseModel):
@@ -361,6 +364,7 @@ def gps_check_in(
     current_user: dict = Depends(get_current_user),
 ):
     """Check in using mobile GPS. Enforces geofencing radius constraint."""
+    raise HTTPException(status_code=400, detail="التسجيل متاح فقط من خلال جهاز البصمة")
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
@@ -421,6 +425,7 @@ def gps_check_out(
     current_user: dict = Depends(get_current_user),
 ):
     """Check out using mobile GPS. Enforces geofencing radius constraint."""
+    raise HTTPException(status_code=400, detail="التسجيل متاح فقط من خلال جهاز البصمة")
     emp_id = current_user.get("employee_id")
     if not emp_id:
         raise HTTPException(status_code=400, detail="المستخدم الحالي غير مرتبط بملف موظف")
@@ -458,59 +463,15 @@ def gps_check_out(
         "hours_worked": hours,
     }
 
-
 @router.post("/sync-biometric")
 def sync_biometric(current_user: dict = Depends(require_role("admin", "hr"))):
-    """Mock API simulating sync with fingerprint biometric devices daily."""
-    today = _get_today_str()
-    active_employees = list(employees_col().find({
-        "is_active": True,
-        "employee_id": {"$ne": "EMP-7777"},
-        "email": {"$ne": "ceo@xqpharma.com"},
-        "job_title": {"$ne": "الرئيس التنفيذي"}
-    }))
-    synced_count = 0
-    
-    for emp in active_employees:
-        emp_id = emp["employee_id"]
-        # Skip if they already have attendance recorded today (e.g. leave, mission or GPS)
-        existing = attendance_col().find_one({"employee_id": emp_id, "date": today})
-        if existing:
-            continue
-            
-        # Simulate biometric check-in (85% attendance probability)
-        if random.random() < 0.85:
-            # 80% on-time, 20% late
-            if random.random() < 0.80:
-                h = random.randint(8, 10)
-                m = random.randint(0, 59)
-            else:
-                h = random.randint(11, 12)
-                m = random.randint(0, 30)
-                
-            check_in_time = f"{h:02d}:{m:02d}:00"
-            status_val = "late" if _is_late(check_in_time) else "on_time"
-            
-            # Simulate check-out 8 hours later
-            h_out = min(23, h + random.randint(7, 9))
-            m_out = random.randint(0, 59)
-            check_out_time = f"{h_out:02d}:{m_out:02d}:00"
-            hours = _calc_hours(check_in_time, check_out_time)
-            
-            record = {
-                "employee_id": emp_id,
-                "employee_name": emp["name"],
-                "department": emp.get("department", ""),
-                "job_title": emp.get("job_title", ""),
-                "date": today,
-                "check_in": check_in_time,
-                "check_out": check_out_time,
-                "status": status_val,
-                "hours_worked": hours,
-                "notes": "Biometric Sync",
-                "source": "biometric",
-            }
-            attendance_col().insert_one(record)
-            synced_count += 1
-            
-    return {"message": f"تم سحب البيانات من أجهزة البصمة لـ {synced_count} موظف اليوم"}
+    """Sync attendance and employees from ZK fingerprint device."""
+    from app.services.attendance_cron import sync_biometric_device
+    result = sync_biometric_device(source="manual")
+    if "error" in result:
+        raise HTTPException(
+            status_code=500,
+            detail=f"خطأ في الاتصال بجهاز البصمة: {result['error']}"
+        )
+    return result
+

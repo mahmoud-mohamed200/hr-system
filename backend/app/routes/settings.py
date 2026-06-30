@@ -17,6 +17,8 @@ class SettingsUpdate(BaseModel):
     work_end: str = Field(pattern=r"^\d{2}:\d{2}$")
     late_threshold_minutes: int = Field(ge=0, le=120)
     weekend_days: List[str]
+    biometric_device_ip: str = Field(default="192.168.1.3")
+    biometric_device_port: int = Field(default=4370, ge=1, le=65535)
 
 
 @router.get("")
@@ -31,6 +33,8 @@ def get_system_settings():
             "work_end": settings.WORK_END,
             "late_threshold_minutes": settings.LATE_THRESHOLD_MINUTES,
             "weekend_days": settings.WEEKEND_DAYS,
+            "biometric_device_ip": settings.BIOMETRIC_DEVICE_IP,
+            "biometric_device_port": settings.BIOMETRIC_DEVICE_PORT,
         }
     
     return {
@@ -39,6 +43,8 @@ def get_system_settings():
         "work_end": doc["work_end"],
         "late_threshold_minutes": doc["late_threshold_minutes"],
         "weekend_days": doc["weekend_days"],
+        "biometric_device_ip": doc.get("biometric_device_ip", settings.BIOMETRIC_DEVICE_IP),
+        "biometric_device_port": doc.get("biometric_device_port", settings.BIOMETRIC_DEVICE_PORT),
     }
 
 
@@ -54,6 +60,8 @@ def update_system_settings(
         "work_end": data.work_end,
         "late_threshold_minutes": data.late_threshold_minutes,
         "weekend_days": [day.lower() for day in data.weekend_days],
+        "biometric_device_ip": data.biometric_device_ip,
+        "biometric_device_port": data.biometric_device_port,
     }
 
     # Update in database
@@ -65,5 +73,7 @@ def update_system_settings(
     settings.WORK_END = data.work_end
     settings.LATE_THRESHOLD_MINUTES = data.late_threshold_minutes
     settings.WEEKEND_DAYS = [day.lower() for day in data.weekend_days]
+    settings.BIOMETRIC_DEVICE_IP = data.biometric_device_ip
+    settings.BIOMETRIC_DEVICE_PORT = data.biometric_device_port
 
     return {"message": "Settings updated successfully", "settings": update_data}

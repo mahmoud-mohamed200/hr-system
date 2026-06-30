@@ -197,48 +197,56 @@ def run_tests():
     print("✅ GPS Check-in outside 200m geofence range was blocked (400 Bad Request) as expected.")
 
     # ----------------------------------------------------
-    # 5. Leaves & Short Hourly Permission Limits (4-hour monthly cap)
+    # 5. Leaves (Restricted to Casual, Sick, Annual)
     # ----------------------------------------------------
-    test_log("Step 5: Leaves & Permission Monthly Cap (4 hours)")
+    test_log("Step 5: Leaves validation (Only Casual, Sick, Annual)")
     current_month_str = today.strftime("%Y-%m-%d")
 
-    # Request 3 hours permission (under limit)
-    perm_payload_1 = {
+    # Reject permission request
+    perm_payload = {
         "leave_type": "permission",
         "start_date": current_month_str,
         "end_date": current_month_str,
         "duration_hours": 3.0,
         "reason": "زيارة الطبيب"
     }
-    r = requests.post(f"{BASE_URL}/api/leaves", json=perm_payload_1, headers=emp_headers)
-    assert r.status_code == 201, f"First permission request failed: {r.text}"
-    perm_id_1 = r.json()["id"]
-    print("✅ Requesting 3-hour permission succeeded.")
+    r = requests.post(f"{BASE_URL}/api/leaves", json=perm_payload, headers=emp_headers)
+    assert r.status_code == 400, "Permission requests should be blocked"
+    print("✅ Requesting 'permission' was blocked with 400 as expected.")
 
-    # Request another 2 hours permission (exceeds 4 hours monthly cap: 3 + 2 = 5)
-    perm_payload_2 = {
-        "leave_type": "permission",
+    # Reject mission request
+    mission_payload = {
+        "leave_type": "mission",
         "start_date": current_month_str,
         "end_date": current_month_str,
-        "duration_hours": 2.0,
-        "reason": "مشوار عائلي"
+        "reason": "مأمورية عمل"
     }
-    # Wait, we need to approve the first permission first, because the code queries approved permissions in the month.
-    # Let's approve the first permission request
-    r = requests.put(f"{BASE_URL}/api/leaves/{perm_id_1}/status", json={"status": "approved"}, headers=admin_headers)
-    assert r.status_code == 200, f"Approve first permission failed: {r.text}"
-    print("✅ Admin approved the first 3-hour permission.")
+    r = requests.post(f"{BASE_URL}/api/leaves", json=mission_payload, headers=emp_headers)
+    assert r.status_code == 400, "Mission requests should be blocked"
+    print("✅ Requesting 'mission' was blocked with 400 as expected.")
 
-    # Now request the second one. It should fail because 3 + 2 = 5 > 4 hours limit.
-    r = requests.post(f"{BASE_URL}/api/leaves", json=perm_payload_2, headers=emp_headers)
-    assert r.status_code == 400, "Second permission request should have been blocked (cap exceeded)"
-    print("✅ Capping mechanism blocked the second permission (exceeds 4-hour limit) as expected.")
+    # Allow casual leave request
+    casual_payload = {
+        "leave_type": "casual",
+        "start_date": current_month_str,
+        "end_date": current_month_str,
+        "reason": "ظرف طارئ"
+    }
+    r = requests.post(f"{BASE_URL}/api/leaves", json=casual_payload, headers=emp_headers)
+    assert r.status_code == 201, f"Casual request failed: {r.text}"
+    leave_id = r.json()["id"]
+    print("✅ Requesting 'casual' leave succeeded.")
 
-    # Verify automatic attendance adjustments (Permission approved cancels late or absent marks)
+    # Approve the casual leave
+    r = requests.put(f"{BASE_URL}/api/leaves/{leave_id}/status", json={"status": "approved"}, headers=admin_headers)
+    assert r.status_code == 200, f"Approve casual leave failed: {r.text}"
+    print("✅ Admin approved the casual leave request.")
+
+    # Verify automatic attendance adjustments (Approved casual leave sets status to 'leave')
     att_rec = db["attendance"].find_one({"employee_id": emp_id, "date": current_month_str})
     assert att_rec is not None
-    assert att_rec["status"] == "on_time", "Attendance status was not auto-adjusted to 'on_time' on permission approval"
-    print("✅ Attendance record was automatically updated to 'on_time' after permission approval.")
+    assert att_rec["status"] == "leave", "Attendance status was not auto-adjusted to 'leave' on casual leave approval"
+    print("✅ Attendance record was automatically updated to 'leave' after casual leave approval.")
 
     # ----------------------------------------------------
     # 6. Long-Term Loans (Schedule Generator)

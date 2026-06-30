@@ -18,6 +18,7 @@ class EmployeeCreate(BaseModel):
     salary: Optional[float] = None
     address: Optional[str] = None
     emergency_contact: Optional[str] = None
+    biometric_id: Optional[int] = None  # Device ID in ZK fingerprint device
 
 
 class EmployeeUpdate(BaseModel):
@@ -31,6 +32,7 @@ class EmployeeUpdate(BaseModel):
     emergency_contact: Optional[str] = None
     is_active: Optional[bool] = None
     contract_end_date: Optional[str] = None
+    biometric_id: Optional[int] = None
     two_factor_enabled: Optional[bool] = None
 
 
@@ -51,6 +53,7 @@ class EmployeeResponse(BaseModel):
     photo_url: Optional[str] = None
     is_active: bool = True
     two_factor_enabled: bool = False
+    biometric_id: Optional[int] = None
     documents: List[dict] = []
     career_path: List[dict] = []
     penalties: List[dict] = []

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.database import get_client, get_db
-from app.routes import auth, employees, attendance, departments, dashboard, reports, settings as settings_routes, leaves, advances, loans, assets, payroll
+from app.routes import auth, employees, attendance, departments, dashboard, reports, settings as settings_routes, leaves, advances, loans, assets, payroll, notifications
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.services.attendance_cron import mark_absences_for_today
@@ -69,8 +69,10 @@ def startup_db_client():
     # Start background scheduler
     if not scheduler.running:
         scheduler.add_job(mark_absences_for_today, 'cron', hour=23, minute=50)
+        from app.services.attendance_cron import sync_biometric_device
+        scheduler.add_job(sync_biometric_device, 'interval', hours=2)
         scheduler.start()
-        logger.info("⏱️ Background scheduler started. Auto-absent job scheduled at 23:50 daily.")
+        logger.info("⏱️ Background scheduler started. Auto-absent job scheduled at 23:50 daily. Biometric sync scheduled every 2 hours.")
 
 
 @app.on_event("shutdown")
@@ -100,6 +102,7 @@ app.include_router(advances.router)
 app.include_router(loans.router)
 app.include_router(assets.router)
 app.include_router(payroll.router)
+app.include_router(notifications.router)
 
 # Serve frontend static assets explicitly if they exist
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")

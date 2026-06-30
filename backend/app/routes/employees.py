@@ -246,6 +246,32 @@ def update_employee(
         )
 
     employees_col().update_one({"employee_id": employee_id}, {"$set": update_data})
+    
+    # Propagate denormalized name, department, and job_title changes to other collections
+    from app.database import leaves_col, loans_col, advances_col, payrolls_col, assets_col
+    
+    if "name" in update_data:
+        new_name = update_data["name"]
+        attendance_col().update_many({"employee_id": employee_id}, {"$set": {"employee_name": new_name}})
+        leaves_col().update_many({"employee_id": employee_id}, {"$set": {"employee_name": new_name}})
+        loans_col().update_many({"employee_id": employee_id}, {"$set": {"employee_name": new_name}})
+        advances_col().update_many({"employee_id": employee_id}, {"$set": {"employee_name": new_name}})
+        payrolls_col().update_many({"employee_id": employee_id}, {"$set": {"employee_name": new_name}})
+        assets_col().update_many({"employee_id": employee_id}, {"$set": {"employee_name": new_name}})
+        
+    if "department" in update_data:
+        new_dept = update_data["department"]
+        attendance_col().update_many({"employee_id": employee_id}, {"$set": {"department": new_dept}})
+        leaves_col().update_many({"employee_id": employee_id}, {"$set": {"department": new_dept}})
+        loans_col().update_many({"employee_id": employee_id}, {"$set": {"department": new_dept}})
+        advances_col().update_many({"employee_id": employee_id}, {"$set": {"department": new_dept}})
+        payrolls_col().update_many({"employee_id": employee_id}, {"$set": {"department": new_dept}})
+        
+    if "job_title" in update_data:
+        new_job = update_data["job_title"]
+        attendance_col().update_many({"employee_id": employee_id}, {"$set": {"job_title": new_job}})
+        payrolls_col().update_many({"employee_id": employee_id}, {"$set": {"job_title": new_job}})
+
     updated = employees_col().find_one({"employee_id": employee_id})
     return _employee_to_response(updated)
 

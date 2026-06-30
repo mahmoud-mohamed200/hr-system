@@ -37,7 +37,9 @@ const SettingsPage = () => {
     work_start: '11:00',
     work_end: '19:00',
     late_threshold_minutes: 15,
-    weekend_days: ['friday']
+    weekend_days: ['friday'],
+    biometric_device_ip: '192.168.1.3',
+    biometric_device_port: 4370
   });
   const [systemLoading, setSystemLoading] = useState(false);
   const [systemSaving, setSystemSaving] = useState(false);
@@ -86,7 +88,7 @@ const SettingsPage = () => {
     const { name, value } = e.target;
     setSystemData(prev => ({
       ...prev,
-      [name]: name === 'late_threshold_minutes' ? parseInt(value) || 0 : value
+      [name]: name === 'late_threshold_minutes' || name === 'biometric_device_port' ? parseInt(value) || 0 : value
     }));
   };
 
@@ -427,6 +429,17 @@ const SettingsPage = () => {
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>
                   عمليات تسجيل الحضور بعد (وقت البدء + فترة السماح) ستعتبر تأخيراً تلقائياً في السجلات.
                 </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label className="setting-label">عنوان IP لجهاز البصمة (IP Address)</label>
+                  <input type="text" name="biometric_device_ip" placeholder="192.168.1.3" value={systemData.biometric_device_ip || ''} onChange={handleSystemChange} className="settings-input" />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label className="setting-label">منفذ جهاز البصمة (Port)</label>
+                  <input type="number" name="biometric_device_port" placeholder="4370" value={systemData.biometric_device_port || ''} onChange={handleSystemChange} className="settings-input" />
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

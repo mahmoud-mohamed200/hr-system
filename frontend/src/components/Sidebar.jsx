@@ -30,7 +30,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard, roles: ['admin', 'hr', 'employee'] },
     { path: '/employees', label: 'الموظفين', icon: Users, roles: ['admin', 'hr'] },
     { path: '/attendance', label: 'سجل الحضور', icon: CalendarCheck, roles: ['admin', 'hr', 'employee'] },
-    { path: '/leaves', label: 'الإجازات والأذونات', icon: Calendar, roles: ['admin', 'hr', 'employee'] },
+    { path: '/leaves', label: 'الإجازات', icon: Calendar, roles: ['admin', 'hr', 'employee'] },
     { path: '/loans', label: 'السلف والقروض', icon: Coins, roles: ['admin', 'hr', 'employee'] },
     { path: '/payroll', label: 'الرواتب', icon: Wallet, roles: ['admin', 'hr', 'employee'] },
     { path: '/assets', label: 'العهد والأصول', icon: Package, roles: ['admin', 'hr'] },
@@ -47,7 +47,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
       <aside className={`sidebar ${isOpen ? 'open' : ''}`} style={{ direction: 'rtl' }}>
         <div className="logo-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 0.5rem' }}>
           <img 
-            src={`${BACKEND_URL}/uploads/xq-logo.avif`} 
+            src={`${BACKEND_URL}/uploads/xq-logo.avif?v=2`} 
             alt="XQ Logo" 
             style={{ 
               width: '100%', 

@@ -179,48 +179,7 @@ const DashboardPage = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Header title="لوحة التحكم الشخصية" />
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            {!isCeo && (
-              <>
-                <button 
-                  onClick={() => handleSelfCheck('in')}
-                  style={{
-                    background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '0.5rem 1.2rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '700',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
-                  }}
-                >
-                  <UserCheck size={16} />
-                  <span>تسجيل حضور</span>
-                </button>
 
-                <button 
-                  onClick={() => handleSelfCheck('out')}
-                  style={{
-                    background: 'rgba(0, 39, 73, 0.05)',
-                    border: '1px solid var(--glass-border)',
-                    color: 'var(--text-main)',
-                    padding: '0.5rem 1.2rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem'
-                  }}
-                >
-                  <UserX size={16} color="var(--primary)" />
-                  <span>تسجيل انصراف</span>
-                </button>
-              </>
-            )}
 
             <button 
               onClick={handleRefresh} 
@@ -338,48 +297,7 @@ const DashboardPage = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <Header title="لوحة الحضور والمتابعة" />
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          {!isCeo && (
-            <>
-              <button 
-                onClick={() => handleSelfCheck('in')}
-                style={{
-                  background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '0.5rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '700',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
-                }}
-              >
-                <UserCheck size={16} />
-                <span>تسجيل حضور يدوي</span>
-              </button>
 
-              <button 
-                onClick={() => handleSelfCheck('out')}
-                style={{
-                  background: 'rgba(0, 39, 73, 0.05)',
-                  border: '1px solid var(--glass-border)',
-                  color: 'var(--text-main)',
-                  padding: '0.5rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <UserX size={16} color="var(--primary)" />
-                <span>تسجيل انصراف يدوي</span>
-              </button>
-            </>
-          )}
 
           <button 
             onClick={handleRefresh} 
@@ -406,7 +324,7 @@ const DashboardPage = () => {
 
       {/* Stats Grid */}
       <div className="dashboard-grid">
-        <div className="card stats-card" style={{ gridColumn: 'span 4' }}>
+        <div className="card stats-card" style={{ gridColumn: 'span 3' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span className="stat-label">إجمالي الموظفين</span>
             <Users size={20} color="var(--primary)" />
@@ -414,7 +332,7 @@ const DashboardPage = () => {
           <span className="stat-value">{stats.totalEmployees}</span>
         </div>
 
-        <div className="card stats-card" style={{ gridColumn: 'span 4' }}>
+        <div className="card stats-card" style={{ gridColumn: 'span 3' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span className="stat-label">حاضرون اليوم</span>
             <UserCheck size={20} color="var(--accent)" />
@@ -422,14 +340,23 @@ const DashboardPage = () => {
           <span className="stat-value" style={{ color: 'var(--accent)' }}>{stats.presentToday}</span>
         </div>
 
-        <div className="card stats-card" style={{ gridColumn: 'span 4' }}>
+        <div className="card stats-card" style={{ gridColumn: 'span 3' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="stat-label">حالات التأخير</span>
-            <Clock size={20} color="var(--danger)" />
+            <span className="stat-label">الغائبون اليوم</span>
+            <UserX size={20} color="var(--danger)" />
           </div>
-          <span className="stat-value" style={{ color: 'var(--danger)' }}>{stats.lateToday}</span>
+          <span className="stat-value" style={{ color: 'var(--danger)' }}>{stats.absentToday}</span>
+        </div>
+
+        <div className="card stats-card" style={{ gridColumn: 'span 3' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="stat-label">حالات التأخير اليوم</span>
+            <Clock size={20} color="var(--danger)" style={{ color: 'var(--warning)' }} />
+          </div>
+          <span className="stat-value" style={{ color: 'var(--warning)' }}>{stats.lateToday}</span>
         </div>
       </div>
+
 
       <div className="dashboard-grid">
         {/* Recent Attendance Logs */}

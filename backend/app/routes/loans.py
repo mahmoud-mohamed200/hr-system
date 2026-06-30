@@ -8,6 +8,9 @@ from bson import ObjectId
 from app.database import loans_col, employees_col
 from app.auth import get_current_user, require_role
 from app.models.loan import LoanCreate, LoanResponse, LoanUpdateStatus, LoanInstallment, InstallmentStatus
+from app.config import settings
+from app.services.email import send_manager_request_notification
+from app.services.notifications import create_notification
 
 router = APIRouter(prefix="/api/loans", tags=["Loans"])
 
@@ -81,6 +84,37 @@ def request_loan(
     
     result = loans_col().insert_one(doc)
     doc["_id"] = result.inserted_id
+
+    # Trigger Notifications (Email & In-app)
+    try:
+        review_link = f"{settings.FRONTEND_URL}/loans"
+        request_type_display = "Long-term Loan (قرض طويل الأجل)"
+        date_str = doc["created_at"][:10]
+        send_manager_request_notification(
+            employee_name=doc["employee_name"],
+            request_type=request_type_display,
+            date_of_request=date_str,
+            review_link=review_link
+        )
+        # Admin notification
+        create_notification(
+            recipient_role="admin",
+            title="طلب قرض جديد",
+            message=f"قام الموظف {doc['employee_name']} بتقديم طلب قرض طويل الأجل بقيمة {doc['amount']} ج.م بتاريخ {date_str}.",
+            request_type="loan",
+            request_id=str(doc["_id"])
+        )
+        # Employee notification
+        create_notification(
+            recipient_id=doc["employee_id"],
+            title="تم تقديم طلب القرض",
+            message=f"تم تقديم طلب قرض بقيمة {doc['amount']} ج.م بنجاح وهو قيد المراجعة حالياً.",
+            request_type="loan",
+            request_id=str(doc["_id"])
+        )
+    except Exception as n_err:
+        print(f"Error sending notifications for loan request: {n_err}")
+
     return _loan_to_response(doc)
 
 
@@ -137,4 +171,38 @@ def update_loan_status(
 
     loans_col().update_one({"_id": oid}, {"$set": updates})
     updated = loans_col().find_one({"_id": oid})
+
+    # Trigger Status Update Notification (In-app)
+    try:
+        status_text = "مقبول" if data.status == "approved" else "مرفوض" if data.status == "rejected" else data.status
+        create_notification(
+            recipient_id=updated["employee_id"],
+            title="تحديث حالة طلب القرض",
+            message=f"تم {status_text} طلب القرض بقيمة {updated['amount']} ج.م الخاص بك بواسطة {current_user['email']}.",
+            request_type="loan",
+            request_id=str(updated["_id"])
+        )
+    except Exception as n_err:
+        print(f"Error creating status update notification: {n_err}")
+
     return _loan_to_response(updated)
+
+
+@router.delete("/{loan_id}", status_code=status.HTTP_200_OK)
+def delete_loan_request(
+    loan_id: str,
+    current_user: dict = Depends(require_role("admin")),
+):
+    """Delete a loan request. Admin only."""
+    try:
+        oid = ObjectId(loan_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid loan ID")
+
+    loan = loans_col().find_one({"_id": oid})
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan request not found")
+
+    loans_col().delete_one({"_id": oid})
+    return {"message": "Loan request deleted successfully"}
+

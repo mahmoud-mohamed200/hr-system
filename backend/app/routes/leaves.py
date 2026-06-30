@@ -11,6 +11,8 @@ from app.database import leaves_col, employees_col
 from app.auth import get_current_user, require_role
 from app.models.leave import LeaveCreate, LeaveResponse, LeaveUpdateStatus
 from bson import ObjectId
+from app.services.email import send_manager_request_notification
+from app.services.notifications import create_notification
 
 router = APIRouter(prefix="/api/leaves", tags=["Leaves"])
 
@@ -46,6 +48,12 @@ def request_leave(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee profile not found")
 
+    # Enforce allowed leave types
+    allowed_types = ["casual", "sick", "annual"]
+    leave_type_val = data.leave_type.value if hasattr(data.leave_type, "value") else data.leave_type
+    if leave_type_val not in allowed_types:
+        raise HTTPException(status_code=400, detail="نوع الطلب غير مدعوم. الأنواع المسموح بها هي فقط: عارضة، سنوية، ومرضية.")
+
     # Enforce hourly permission limit per month (Egyptian custom)
     if data.leave_type == "permission":
         if not data.duration_hours or data.duration_hours <= 0:
@@ -64,7 +72,6 @@ def request_leave(
         approved_leaves = list(leaves_col().find(query))
         used_hours = sum(l.get("duration_hours" or 0) for l in approved_leaves)
         
-        from app.config import settings
         if used_hours + data.duration_hours > settings.MONTHLY_PERMISSION_LIMIT_HOURS:
             raise HTTPException(
                 status_code=400, 
@@ -88,6 +95,38 @@ def request_leave(
     
     result = leaves_col().insert_one(doc)
     doc["_id"] = result.inserted_id
+
+    # Trigger Notifications (Email & In-app)
+    try:
+        review_link = f"{settings.FRONTEND_URL}/leaves"
+        leave_type_str = doc["leave_type"]
+        request_type_display = f"Leave Request ({leave_type_str.capitalize()})"
+        date_str = doc["created_at"][:10]
+        send_manager_request_notification(
+            employee_name=doc["employee_name"],
+            request_type=request_type_display,
+            date_of_request=date_str,
+            review_link=review_link
+        )
+        # Admin notification
+        create_notification(
+            recipient_role="admin",
+            title="طلب إجازة جديد",
+            message=f"قام الموظف {doc['employee_name']} بتقديم طلب إجازة ({leave_type_str}) بتاريخ {date_str}.",
+            request_type="leave",
+            request_id=str(doc["_id"])
+        )
+        # Employee notification
+        create_notification(
+            recipient_id=doc["employee_id"],
+            title="تم تقديم طلب الإجازة",
+            message=f"تم تقديم طلب إجازة ({leave_type_str}) بنجاح وهو قيد المراجعة حالياً.",
+            request_type="leave",
+            request_id=str(doc["_id"])
+        )
+    except Exception as n_err:
+        print(f"Error sending notifications for leave request: {n_err}")
+
     return _leave_to_response(doc)
 
 
@@ -244,4 +283,38 @@ def update_leave_status(
             print(f"Error adjusting attendance: {e}")
             # Do not fail request if attendance sync has minor issues
             
+    # Trigger Status Update Notification (In-app)
+    try:
+        status_text = "مقبول" if data.status == "approved" else "مرفوض" if data.status == "rejected" else data.status
+        leave_type_str = updated.get("leave_type", "")
+        create_notification(
+            recipient_id=updated["employee_id"],
+            title="تحديث حالة طلب الإجازة",
+            message=f"تم {status_text} طلب إجازة ({leave_type_str}) الخاص بك بواسطة {current_user['email']}.",
+            request_type="leave",
+            request_id=str(updated["_id"])
+        )
+    except Exception as n_err:
+        print(f"Error creating status update notification: {n_err}")
+
     return _leave_to_response(updated)
+
+
+@router.delete("/{leave_id}", status_code=status.HTTP_200_OK)
+def delete_leave_request(
+    leave_id: str,
+    current_user: dict = Depends(require_role("admin")),
+):
+    """Delete a leave request. Admin only."""
+    try:
+        oid = ObjectId(leave_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid leave request ID")
+
+    leave = leaves_col().find_one({"_id": oid})
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+
+    leaves_col().delete_one({"_id": oid})
+    return {"message": "Leave request deleted successfully"}
+

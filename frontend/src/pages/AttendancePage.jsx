@@ -329,7 +329,8 @@ const AttendancePage = () => {
       toast.success(res.data.message || 'تمت المزامنة بنجاح', { id: toastId });
       fetchAttendance();
     } catch (err) {
-      toast.error('فشل مزامنة أجهزة البصمة', { id: toastId });
+      const errorMsg = err.response?.data?.detail || 'فشل مزامنة أجهزة البصمة';
+      toast.error(errorMsg, { id: toastId });
     } finally {
       setSyncingBiometric(false);
     }
@@ -909,144 +910,26 @@ const AttendancePage = () => {
         </div>
         
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          {/* Direct self manual check-in/out buttons */}
-          {!isCeo && (
-            <>
-              <button 
-                onClick={() => handleSelfCheck('in')}
-                disabled={loading}
-                style={{
-                  background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-                  color: '#ffffff',
-                  border: 'none',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '700',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-                }}
-              >
-                <UserCheck size={16} />
-                <span>تسجيل حضور يدوي</span>
-              </button>
-
-              <button 
-                onClick={() => handleSelfCheck('out')}
-                disabled={loading}
-                style={{
-                  background: 'rgba(0, 39, 73, 0.05)',
-                  border: '1px solid var(--glass-border)',
-                  color: 'var(--text-main)',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <UserX size={16} color="var(--primary)" />
-                <span>تسجيل انصراف يدوي</span>
-              </button>
-
-              {/* Employee GPS action buttons */}
-              <button 
-                onClick={() => handleGpsCheck('in')}
-                disabled={checkingGps}
-                style={{
-                  background: 'rgba(0, 39, 73, 0.02)',
-                  border: '1px solid var(--glass-border)',
-                  color: 'var(--text-main)',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <MapPin size={16} color="var(--primary)" />
-                <span>حضور بالـ GPS</span>
-              </button>
-
-              <button 
-                onClick={() => handleGpsCheck('out')}
-                disabled={checkingGps}
-                style={{
-                  background: 'rgba(0, 39, 73, 0.02)',
-                  border: '1px solid var(--glass-border)',
-                  color: 'var(--text-main)',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <MapPin size={16} color="var(--text-dim)" />
-                <span>انصراف بالـ GPS</span>
-              </button>
-            </>
-          )} 
-
           {isAdminOrHr && (
-            <>
-              <button 
-                onClick={handleSyncBiometric}
-                disabled={syncingBiometric}
-                style={{
-                  background: 'rgba(168, 85, 247, 0.1)',
-                  border: '1px solid rgba(168, 85, 247, 0.2)',
-                  color: '#c084fc',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}
-              >
-                <RefreshCw size={16} className={syncingBiometric ? 'spin' : ''} />
-                <span>سحب البصمة Biometric</span>
-              </button>
-
-              <button 
-                onClick={() => { setManualType('in'); setManualModalOpen(true); }}
-                style={{
-                  background: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.2)',
-                  color: 'var(--accent)',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600'
-                }}
-              >
-                تحضير يدوي
-              </button>
-              <button 
-                onClick={() => { setManualType('out'); setManualModalOpen(true); }}
-                style={{
-                  background: 'rgba(96, 165, 250, 0.1)',
-                  border: '1px solid rgba(96, 165, 250, 0.2)',
-                  color: '#60a5fa',
-                  padding: '0.6rem 1.2rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: '600'
-                }}
-              >
-                انصراف يدوي
-              </button>
-            </>
+            <button 
+              onClick={handleSyncBiometric}
+              disabled={syncingBiometric}
+              style={{
+                background: 'rgba(168, 85, 247, 0.1)',
+                border: '1px solid rgba(168, 85, 247, 0.2)',
+                color: '#c084fc',
+                padding: '0.6rem 1.2rem',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              <RefreshCw size={16} className={syncingBiometric ? 'spin' : ''} />
+              <span>سحب البصمة Biometric</span>
+            </button>
           )}
         </div>
       </div>

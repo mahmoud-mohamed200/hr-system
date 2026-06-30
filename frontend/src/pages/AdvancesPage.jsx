@@ -6,7 +6,8 @@ import {
   Coins,
   Check, 
   X, 
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -72,6 +73,18 @@ const AdvancesPage = () => {
         toast.success(`تم ${actionText} طلب السلفة بنجاح`);
       } catch (err) {
         toast.error(err.response?.data?.detail || 'فشلت العملية');
+      }
+    }
+  };
+
+  const handleDeleteAdvance = async (id) => {
+    if (window.confirm('هل أنت متأكد من رغبتك في حذف طلب السلفة هذا نهائياً؟')) {
+      try {
+        await client.delete(`/advances/${id}`);
+        fetchAdvances();
+        toast.success('تم حذف طلب السلفة بنجاح');
+      } catch (err) {
+        toast.error(err.response?.data?.detail || 'فشلت عملية الحذف');
       }
     }
   };
@@ -156,25 +169,47 @@ const AdvancesPage = () => {
                     </td>
                     {isAdminOrHr && (
                       <td style={{ textAlign: 'left', paddingLeft: '1.5rem' }}>
-                        {rec.status === 'pending' ? (
-                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                          {rec.status === 'pending' ? (
+                            <>
+                              <button 
+                                onClick={() => handleUpdateStatus(rec.id, 'approved')}
+                                title="اعتماد"
+                                style={{
+                                  background: 'rgba(34, 197, 94, 0.1)',
+                                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                                  color: 'var(--accent)',
+                                  padding: '0.4rem',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button 
+                                onClick={() => handleUpdateStatus(rec.id, 'rejected')}
+                                title="رفض"
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                                  color: '#f87171',
+                                  padding: '0.4rem',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <X size={14} />
+                              </button>
+                            </>
+                          ) : (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                              بواسطة {rec.approved_by?.split('@')[0]}
+                            </span>
+                          )}
+                          {user?.role === 'admin' && (
                             <button 
-                              onClick={() => handleUpdateStatus(rec.id, 'approved')}
-                              title="اعتماد"
-                              style={{
-                                background: 'rgba(34, 197, 94, 0.1)',
-                                border: '1px solid rgba(34, 197, 94, 0.2)',
-                                color: 'var(--accent)',
-                                padding: '0.4rem',
-                                borderRadius: '6px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <Check size={14} />
-                            </button>
-                            <button 
-                              onClick={() => handleUpdateStatus(rec.id, 'rejected')}
-                              title="رفض"
+                              onClick={() => handleDeleteAdvance(rec.id)}
+                              title="حذف الطلب"
                               style={{
                                 background: 'rgba(239, 68, 68, 0.1)',
                                 border: '1px solid rgba(239, 68, 68, 0.2)',
@@ -184,14 +219,10 @@ const AdvancesPage = () => {
                                 cursor: 'pointer'
                               }}
                             >
-                              <X size={14} />
+                              <Trash2 size={14} />
                             </button>
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-                            بواسطة {rec.approved_by?.split('@')[0]}
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
