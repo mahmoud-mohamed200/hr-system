@@ -20,15 +20,22 @@ class VerifyPayslipPassword(BaseModel):
 
 
 def _get_workdays_in_month(month_str: str) -> List[str]:
-    """Get list of YYYY-MM-DD dates in a month, excluding weekend days (default: Friday)."""
+    """Get list of YYYY-MM-DD dates in a month, excluding weekend days configured in database settings."""
     try:
+        from app.database import settings_col
+        settings_doc = settings_col().find_one()
+        if settings_doc and "weekend_days" in settings_doc:
+            weekend_days = settings_doc["weekend_days"]
+        else:
+            weekend_days = settings.WEEKEND_DAYS
+
         year, month = map(int, month_str.split("-"))
         num_days = calendar.monthrange(year, month)[1]
         workdays = []
         for day in range(1, num_days + 1):
             d = date(year, month, day)
             day_name = d.strftime("%A").lower()
-            if day_name not in settings.WEEKEND_DAYS:
+            if day_name not in weekend_days:
                 workdays.append(d.strftime("%Y-%m-%d"))
         return workdays
     except ValueError:

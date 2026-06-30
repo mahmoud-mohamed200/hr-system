@@ -37,9 +37,12 @@ def _is_late(check_in_time: str) -> bool:
 
 
 def _is_weekend() -> bool:
-    """Check if today is a weekend day."""
+    """Check if today is a weekend day configured in database settings."""
+    from app.database import settings_col
+    settings_doc = settings_col().find_one()
+    weekend_days = settings_doc.get("weekend_days", settings.WEEKEND_DAYS) if settings_doc else settings.WEEKEND_DAYS
     day_name = datetime.now().strftime("%A").lower()
-    return day_name in settings.WEEKEND_DAYS
+    return day_name in weekend_days
 
 
 def _calc_hours(check_in: str, check_out: str) -> float:

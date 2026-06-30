@@ -86,8 +86,12 @@ def mark_absences_for_today():
     logger.info("Running daily auto-absent job...")
     
     # Skip if today is a weekend
+    from app.database import settings_col
+    settings_doc = settings_col().find_one()
+    weekend_days = settings_doc.get("weekend_days", settings.WEEKEND_DAYS) if settings_doc else settings.WEEKEND_DAYS
+
     day_name = datetime.now().strftime("%A").lower()
-    if day_name in settings.WEEKEND_DAYS:
+    if day_name in weekend_days:
         logger.info(f"Today is {day_name} (weekend). Skipping auto-absent job.")
         return
 
