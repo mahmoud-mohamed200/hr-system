@@ -1,10 +1,82 @@
 # app/services/attendance_cron.py
 import logging
+import socket
+import ipaddress
+import psutil
 from datetime import datetime
 from app.database import employees_col, attendance_col
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def is_on_same_network(device_ip: str) -> bool:
+    """
+    Check if the server is on the same local network subnet as the biometric device.
+    Supports loopback/local references as same-network.
+    """
+    # 1. Resolve hostnames if device_ip is not a raw IP
+    try:
+        resolved_ip = socket.gethostbyname(device_ip)
+    except Exception:
+        resolved_ip = device_ip
+
+    try:
+        dev_ip_obj = ipaddress.ip_address(resolved_ip)
+    except ValueError:
+        return False
+
+    # Loopback is always same network
+    if dev_ip_obj.is_loopback:
+        return True
+
+    # 2. Iterate through all active network interfaces and check subnets
+    try:
+        for interface, addrs in psutil.net_if_addrs().items():
+            for addr in addrs:
+                if addr.family == socket.AF_INET:
+                    local_ip = addr.address
+                    if local_ip == '127.0.0.1':
+                        continue
+                    netmask = addr.netmask or '255.255.255.0'
+                    try:
+                        network = ipaddress.IPv4Network(f"{local_ip}/{netmask}", strict=False)
+                        if dev_ip_obj in network:
+                            return True
+                    except Exception:
+                        pass
+    except Exception as e:
+        logger.error(f"Error checking network interfaces via psutil: {e}")
+
+    # 3. Fallback check: compare first three octets of IP (assumes /24 subnet)
+    try:
+        dev_parts = resolved_ip.split('.')
+        if len(dev_parts) == 4:
+            device_prefix = ".".join(dev_parts[:3]) + "."
+            
+            # Check local IPs via socket hostname resolution
+            try:
+                hostname = socket.gethostname()
+                for ip in socket.gethostbyname_ex(hostname)[2]:
+                    if ip.startswith(device_prefix):
+                        return True
+            except Exception:
+                pass
+                
+            # Dummy UDP socket connection to find routing source IP
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect((resolved_ip, 1))
+                route_ip = s.getsockname()[0]
+                s.close()
+                if route_ip.startswith(device_prefix):
+                    return True
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return False
 
 def mark_absences_for_today():
     """
@@ -132,6 +204,15 @@ def sync_biometric_device(source: str = "cron") -> dict:
     else:
         DEVICE_IP = settings.BIOMETRIC_DEVICE_IP
         DEVICE_PORT = settings.BIOMETRIC_DEVICE_PORT
+
+    # Check if the device is on the same local network subnet
+    if not is_on_same_network(DEVICE_IP):
+        err_msg = f"السيرفر وجهاز البصمة ({DEVICE_IP}) ليسا على نفس الشبكة المحلية."
+        logger.warning(f"⚠️ {err_msg}")
+        errors_list.append(err_msg)
+        _write_sync_log(biometric_sync_log_col(), sync_start, source,
+                        synced_count, new_employees_added, errors_list)
+        return {"error": err_msg, "synced": 0}
 
     DEFAULT_DEPARTMENT = "Operations"
     DEFAULT_JOB_TITLE = "موظف"

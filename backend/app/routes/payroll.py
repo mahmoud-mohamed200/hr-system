@@ -51,6 +51,7 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     # 1. Lateness minutes calculation
     lateness_minutes = 0.0
     checked_in_dates = set()
+    lateness_days_details = []
     
     is_ceo = emp_id == "EMP-7777" or emp.get("job_title") == "الرئيس التنفيذي" or emp.get("email") == "ceo@xqpharma.com"
     
@@ -68,9 +69,19 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
                     diff = (t_check - t_start).total_seconds() / 60
                     if diff > settings.LATE_THRESHOLD_MINUTES:
                         lateness_minutes += diff
+                        lateness_days_details.append({
+                            "date": r["date"],
+                            "check_in": r["check_in"][:5],
+                            "minutes_late": round(diff, 2)
+                        })
                 except Exception:
                     # Fallback to general late penalty minutes
                     lateness_minutes += 30
+                    lateness_days_details.append({
+                        "date": r["date"],
+                        "check_in": r.get("check_in", "")[:5],
+                        "minutes_late": 30.0
+                    })
                 
     hourly_rate = basic_salary / 240.0 if basic_salary > 0 else 0.0
     
@@ -82,6 +93,7 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     
     # 3. Unjustified Absence Deduction
     deductions_unjustified_absence = 0.0
+    absent_days_details = []
     if not is_ceo:
         # Find active days in month up to today (if current month) or full month
         all_workdays = _get_workdays_in_month(month)
@@ -94,11 +106,13 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
                 continue
             if day not in checked_in_dates:
                 absent_days += 1
+                absent_days_details.append(day)
                 
         deductions_unjustified_absence = round(absent_days * (basic_salary / 30.0), 2)
     
     # 4. Loan Installments Deduction
     deductions_loans = 0.0
+    loans_details = []
     active_loan = loans_col().find_one({
         "employee_id": emp_id,
         "status": "approved",
@@ -108,6 +122,11 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
         for p in active_loan.get("payments", []):
             if p["month"] == month and p["status"] == "pending":
                 deductions_loans = p["amount"]
+                loans_details.append({
+                    "loan_id": str(active_loan["_id"]),
+                    "installment_month": p["month"],
+                    "amount": p["amount"]
+                })
                 break
                 
     # 5. Salary Advances Deduction (Temporary advances fully repaid in same month)
@@ -118,12 +137,23 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
         "created_at": {"$regex": f"^{month}"}
     }))
     deductions_advances = sum(a.get("amount") for a in advances)
+    advances_details = [{
+        "advance_id": str(a["_id"]),
+        "amount": a.get("amount"),
+        "date": a.get("created_at")[:10] if a.get("created_at") else ""
+    } for a in advances]
     
     # 6. Administrative Penalties (logged under employee details)
     deductions_penalties = 0.0
+    penalties_details = []
     for penalty in emp.get("penalties", []):
         if penalty.get("date", "").startswith(month):
             deductions_penalties += penalty.get("amount", 0.0)
+            penalties_details.append({
+                "date": penalty.get("date"),
+                "reason": penalty.get("reason", "جزاء إداري"),
+                "amount": penalty.get("amount", 0.0)
+            })
             
     # Calculate Net Salary
     net_salary = gross_salary - (
@@ -146,8 +176,16 @@ def _calculate_employee_payroll(emp: dict, month: str) -> dict:
         "deductions_loans": deductions_loans,
         "deductions_advances": deductions_advances,
         "deductions_penalties": deductions_penalties,
-        "net_salary": net_salary
+        "net_salary": net_salary,
+        "absent_days_count": absent_days if not is_ceo else 0,
+        "absent_days_details": absent_days_details,
+        "lateness_minutes": round(lateness_minutes, 2),
+        "lateness_days_details": lateness_days_details,
+        "loans_details": loans_details,
+        "advances_details": advances_details,
+        "penalties_details": penalties_details
     }
+
 
 
 @router.get("/calculate")

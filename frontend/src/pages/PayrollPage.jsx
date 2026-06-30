@@ -423,37 +423,88 @@ const PayrollPage = () => {
                   </div>
 
                   {decryptedPayslip.deductions_unjustified_absence > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
-                      <span>خصم أيام الغياب غير المبررة</span>
-                      <span>-{decryptedPayslip.deductions_unjustified_absence} ج.م</span>
+                    <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--danger)' }}>
+                        <span>خصم أيام الغياب غير المبررة ({decryptedPayslip.absent_days_count} يوم)</span>
+                        <span>-{decryptedPayslip.deductions_unjustified_absence} ج.م</span>
+                      </div>
+                      {decryptedPayslip.absent_days_details && decryptedPayslip.absent_days_details.length > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem', textAlign: 'right' }}>
+                          أيام الغياب: {decryptedPayslip.absent_days_details.join(', ')}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_lateness > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
-                      <span>خصم دقائق التأخير عن المواعيد</span>
-                      <span>-{decryptedPayslip.deductions_lateness} ج.م</span>
+                    <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--danger)' }}>
+                        <span>خصم دقائق التأخير عن المواعيد ({decryptedPayslip.lateness_minutes} دقيقة)</span>
+                        <span>-{decryptedPayslip.deductions_lateness} ج.م</span>
+                      </div>
+                      {decryptedPayslip.lateness_days_details && decryptedPayslip.lateness_days_details.length > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem', textAlign: 'right', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'flex-start', direction: 'rtl' }}>
+                          <span>تفاصيل التأخير:</span>
+                          {decryptedPayslip.lateness_days_details.map((d, idx) => (
+                            <span key={idx} style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                              {d.date} ({d.minutes_late} د عند {d.check_in})
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_loans > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
-                      <span>خصم قسط القرض الشهري المجدول</span>
-                      <span>-{decryptedPayslip.deductions_loans} ج.م</span>
+                    <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--danger)' }}>
+                        <span>خصم قسط القرض الشهري المجدول</span>
+                        <span>-{decryptedPayslip.deductions_loans} ج.م</span>
+                      </div>
+                      {decryptedPayslip.loans_details && decryptedPayslip.loans_details.length > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem', textAlign: 'right' }}>
+                          {decryptedPayslip.loans_details.map((l, idx) => (
+                            <div key={idx}>قسط القرض المستحق لشهر {l.installment_month} بمبلغ {l.amount} ج.م</div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_advances > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
-                      <span>خصم السلفة المؤقتة المسحوبة</span>
-                      <span>-{decryptedPayslip.deductions_advances} ج.م</span>
+                    <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--danger)' }}>
+                        <span>خصم السلفة المؤقتة المسحوبة</span>
+                        <span>-{decryptedPayslip.deductions_advances} ج.م</span>
+                      </div>
+                      {decryptedPayslip.advances_details && decryptedPayslip.advances_details.length > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem', textAlign: 'right', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'flex-start', direction: 'rtl' }}>
+                          <span>تفاصيل السلف:</span>
+                          {decryptedPayslip.advances_details.map((a, idx) => (
+                            <span key={idx} style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '2px 6px', borderRadius: '4px' }}>
+                              بتاريخ {a.date || 'غير محدد'} بمبلغ {a.amount} ج.م
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {decryptedPayslip.deductions_penalties > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem', color: 'var(--danger)' }}>
-                      <span>خصم الجزاءات الإدارية الصادرة</span>
-                      <span>-{decryptedPayslip.deductions_penalties} ج.م</span>
+                    <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.4rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--danger)' }}>
+                        <span>خصم الجزاءات الإدارية الصادرة</span>
+                        <span>-{decryptedPayslip.deductions_penalties} ج.م</span>
+                      </div>
+                      {decryptedPayslip.penalties_details && decryptedPayslip.penalties_details.length > 0 && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                          {decryptedPayslip.penalties_details.map((p, idx) => (
+                            <div key={idx} style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                              تاريخ {p.date}: {p.reason} ({p.amount} ج.م)
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -531,37 +582,88 @@ const PayrollPage = () => {
             </div>
 
             {decryptedPayslip.deductions_unjustified_absence > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
-                <span>خصم أيام الغياب غير المبررة</span>
-                <span>-{decryptedPayslip.deductions_unjustified_absence} ج.م</span>
+              <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
+                  <span>خصم أيام الغياب غير المبررة ({decryptedPayslip.absent_days_count} يوم)</span>
+                  <span>-{decryptedPayslip.deductions_unjustified_absence} ج.م</span>
+                </div>
+                {decryptedPayslip.absent_days_details && decryptedPayslip.absent_days_details.length > 0 && (
+                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.2rem', textAlign: 'right' }}>
+                    أيام الغياب: {decryptedPayslip.absent_days_details.join(', ')}
+                  </div>
+                )}
               </div>
             )}
 
             {decryptedPayslip.deductions_lateness > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
-                <span>خصم دقائق التأخير عن المواعيد</span>
-                <span>-{decryptedPayslip.deductions_lateness} ج.م</span>
+              <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
+                  <span>خصم دقائق التأخير عن المواعيد ({decryptedPayslip.lateness_minutes} دقيقة)</span>
+                  <span>-{decryptedPayslip.deductions_lateness} ج.م</span>
+                </div>
+                {decryptedPayslip.lateness_days_details && decryptedPayslip.lateness_days_details.length > 0 && (
+                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.2rem', textAlign: 'right', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'flex-start', direction: 'rtl' }}>
+                    <span>تفاصيل التأخير:</span>
+                    {decryptedPayslip.lateness_days_details.map((d, idx) => (
+                      <span key={idx} style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+                        {d.date} ({d.minutes_late} د عند {d.check_in})
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {decryptedPayslip.deductions_loans > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
-                <span>خصم قسط القرض الشهري المجدول</span>
-                <span>-{decryptedPayslip.deductions_loans} ج.م</span>
+              <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
+                  <span>خصم قسط القرض الشهري المجدول</span>
+                  <span>-{decryptedPayslip.deductions_loans} ج.م</span>
+                </div>
+                {decryptedPayslip.loans_details && decryptedPayslip.loans_details.length > 0 && (
+                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.2rem', textAlign: 'right' }}>
+                    {decryptedPayslip.loans_details.map((l, idx) => (
+                      <div key={idx}>قسط القرض المستحق لشهر {l.installment_month} بمبلغ {l.amount} ج.م</div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {decryptedPayslip.deductions_advances > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
-                <span>خصم السلفة المؤقتة المسحوبة</span>
-                <span>-{decryptedPayslip.deductions_advances} ج.م</span>
+              <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
+                  <span>خصم السلفة المؤقتة المسحوبة</span>
+                  <span>-{decryptedPayslip.deductions_advances} ج.م</span>
+                </div>
+                {decryptedPayslip.advances_details && decryptedPayslip.advances_details.length > 0 && (
+                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.2rem', textAlign: 'right', display: 'flex', flexWrap: 'wrap', gap: '0.4rem', justifyContent: 'flex-start', direction: 'rtl' }}>
+                    <span>تفاصيل السلف:</span>
+                    {decryptedPayslip.advances_details.map((a, idx) => (
+                      <span key={idx} style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
+                        بتاريخ {a.date || 'غير محدد'} بمبلغ {a.amount} ج.م
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {decryptedPayslip.deductions_penalties > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem', color: '#dc2626' }}>
-                <span>خصم الجزاءات الإدارية الصادرة</span>
-                <span>-{decryptedPayslip.deductions_penalties} ج.م</span>
+              <div style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
+                  <span>خصم الجزاءات الإدارية الصادرة</span>
+                  <span>-{decryptedPayslip.deductions_penalties} ج.م</span>
+                </div>
+                {decryptedPayslip.penalties_details && decryptedPayslip.penalties_details.length > 0 && (
+                  <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.2rem', textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    {decryptedPayslip.penalties_details.map((p, idx) => (
+                      <div key={idx} style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+                        تاريخ {p.date}: {p.reason} ({p.amount} ج.م)
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
