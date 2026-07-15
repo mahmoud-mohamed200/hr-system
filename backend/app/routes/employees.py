@@ -54,6 +54,7 @@ def _employee_to_response(emp: dict) -> EmployeeResponse:
         photo_url=emp.get("photo_url"),
         is_active=emp.get("is_active", True),
         two_factor_enabled=emp.get("two_factor_enabled", False),
+        biometric_id=emp.get("biometric_id"),
         documents=emp.get("documents", []),
         career_path=emp.get("career_path", []),
         penalties=emp.get("penalties", []),
@@ -152,6 +153,11 @@ def create_employee(
     if employees_col().find_one({"email": employee.email}):
         raise HTTPException(status_code=400, detail="البريد الإلكتروني مستخدم بالفعل")
 
+    # Check biometric_id uniqueness if provided
+    if employee.biometric_id:
+        if employees_col().find_one({"biometric_id": employee.biometric_id}):
+            raise HTTPException(status_code=400, detail="رقم البصمة مستخدم بالفعل لموظف آخر")
+
     emp_id = _generate_employee_id()
     now = datetime.now(timezone.utc).isoformat()
 
@@ -168,6 +174,7 @@ def create_employee(
         "salary": encrypt_data(employee.salary),
         "address": employee.address,
         "emergency_contact": employee.emergency_contact,
+        "biometric_id": employee.biometric_id,
         "photo_url": None,
         "is_active": True,
         "two_factor_enabled": False,
@@ -176,6 +183,40 @@ def create_employee(
         "penalties": [],
         "created_at": now,
     }
+
+    # Push to ZK device if biometric_id is provided
+    if employee.biometric_id:
+        from app.database import settings_col
+        settings_doc = settings_col().find_one()
+        if settings_doc:
+            DEVICE_IP = settings_doc.get("biometric_device_ip", settings.BIOMETRIC_DEVICE_IP)
+            DEVICE_PORT = int(settings_doc.get("biometric_device_port", settings.BIOMETRIC_DEVICE_PORT))
+        else:
+            DEVICE_IP = settings.BIOMETRIC_DEVICE_IP
+            DEVICE_PORT = settings.BIOMETRIC_DEVICE_PORT
+
+        try:
+            from zk import ZK
+            # Connect to ZK device and upload user profile
+            zk = ZK(DEVICE_IP, port=DEVICE_PORT, timeout=5, ommit_ping=True)
+            conn = zk.connect()
+            conn.disable_device()
+            conn.set_user(
+                uid=int(employee.biometric_id),
+                name=employee.name,
+                privilege=0,  # 0: Normal user
+                password='',
+                card=0,
+                user_id=str(employee.biometric_id)
+            )
+            conn.enable_device()
+            conn.disconnect()
+            import logging
+            logging.getLogger(__name__).info(f"🚀 Successfully pushed user {employee.name} to ZK device.")
+        except Exception as e:
+            # Log the exception, but don't fail employee creation if ZK device is offline/unreachable
+            import logging
+            logging.getLogger(__name__).warning(f"⚠️ Could not push user {employee.name} to ZK device: {e}")
 
     result = employees_col().insert_one(doc)
     doc["_id"] = result.inserted_id
