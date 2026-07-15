@@ -41,7 +41,6 @@ def _get_workdays_in_month(month_str: str) -> List[str]:
     except ValueError:
         return []
 
-
 def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     """Calculate payroll metrics for an employee in a given month (Egyptian labor rules)."""
     emp_id = emp["employee_id"]
