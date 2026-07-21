@@ -22,7 +22,7 @@ class Settings:
     COMPANY_NAME: str = os.getenv("COMPANY_NAME", "XQ Pharma")
     WORK_START: str = os.getenv("WORK_START", "11:00")
     WORK_END: str = os.getenv("WORK_END", "19:00")
-    LATE_THRESHOLD_MINUTES: int = int(os.getenv("LATE_THRESHOLD_MINUTES", "15"))
+    LATE_THRESHOLD_MINUTES: int = int(os.getenv("LATE_THRESHOLD_MINUTES", "45"))
     WEEKEND_DAYS: list = os.getenv("WEEKEND_DAYS", "friday").lower().split(",")
 
     # Biometric Device

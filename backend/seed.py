@@ -26,7 +26,7 @@ def seed_db():
             "company_name": "XQ Pharma",
             "work_start": "11:00",
             "work_end": "19:00",
-            "late_threshold_minutes": 15,
+            "late_threshold_minutes": 45,
             "weekend_days": ["friday"],
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
