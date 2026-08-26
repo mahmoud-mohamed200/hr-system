@@ -22,7 +22,12 @@ def get_db():
     if _db is None:
         _db = get_client()[settings.MONGODB_DB]
         _ensure_indexes()
+        try:
+            settings.sync_from_db()
+        except Exception:
+            pass
     return _db
+
 
 
 def _ensure_indexes():

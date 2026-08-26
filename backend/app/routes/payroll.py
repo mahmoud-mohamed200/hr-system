@@ -43,10 +43,12 @@ def _get_workdays_in_month(month_str: str) -> List[str]:
 
 def _calculate_employee_payroll(emp: dict, month: str) -> dict:
     """Calculate payroll metrics for an employee in a given month (Egyptian labor rules)."""
+    settings.sync_from_db()
     emp_id = emp["employee_id"]
     
     # Decrypt salary
     basic_salary = decrypt_float(emp.get("salary")) or 0.0
+
 
     # Query attendance records for the month
     attendance_records = list(attendance_col().find({

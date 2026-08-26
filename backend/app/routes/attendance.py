@@ -28,12 +28,15 @@ def _get_current_time_str() -> str:
 def _is_late(check_in_time: str) -> bool:
     """Check if a check-in time is past the late threshold."""
     try:
+        settings.sync_from_db()
         work_start = datetime.strptime(settings.WORK_START, "%H:%M")
         threshold = work_start + timedelta(minutes=settings.LATE_THRESHOLD_MINUTES)
-        actual = datetime.strptime(check_in_time, "%H:%M:%S")
+        clean_time = check_in_time[:8] if len(check_in_time) >= 8 else check_in_time[:5]
+        actual = datetime.strptime(clean_time, "%H:%M:%S" if len(clean_time) >= 8 else "%H:%M")
         return actual.time() > threshold.time()
-    except ValueError:
+    except Exception:
         return False
+
 
 
 def _is_weekend() -> bool:
@@ -47,7 +50,7 @@ def _is_weekend() -> bool:
 
 def _calc_hours(check_in: str, check_out: str) -> float:
     """Calculate hours worked between check-in and check-out times."""
-    try:
+    try: 
         t_in = datetime.strptime(check_in, "%H:%M:%S")
         t_out = datetime.strptime(check_out, "%H:%M:%S")
         diff = (t_out - t_in).total_seconds() / 3600

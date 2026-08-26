@@ -58,7 +58,7 @@ def _employee_to_response(emp: dict) -> EmployeeResponse:
         career_path=emp.get("career_path", []),
         penalties=emp.get("penalties", []),
         created_at=emp.get("created_at"),
-    )
+    ) 
 
 
 @router.get("/alerts")

@@ -424,9 +424,10 @@ def sync_biometric_device(source: str = "cron") -> dict:
             try:
                 work_start = datetime.strptime(settings.WORK_START, "%H:%M")
                 threshold = work_start + timedelta(minutes=settings.LATE_THRESHOLD_MINUTES)
-                actual = datetime.strptime(check_in_time, "%H:%M:%S")
+                clean_time = check_in_time[:8] if len(check_in_time) >= 8 else check_in_time[:5]
+                actual = datetime.strptime(clean_time, "%H:%M:%S" if len(clean_time) >= 8 else "%H:%M")
                 return actual.time() > threshold.time()
-            except ValueError:
+            except Exception:
                 return False
 
         def _calc_hours(check_in: str, check_out: str) -> float:
@@ -511,13 +512,27 @@ def sync_biometric_device(source: str = "cron") -> dict:
                 updated_fields = {}
 
                 if existing.get("source") == "biometric":
-                    # Full update for biometric-sourced records
-                    if existing.get("check_in") != check_in:
-                        updated_fields["check_in"] = check_in
-                        updated_fields["status"] = status_val
-                    if existing.get("check_out") != check_out:
-                        updated_fields["check_out"] = check_out
-                        updated_fields["hours_worked"] = hours
+                    if existing.get("is_adjusted") or existing.get("manual_override"):
+                        # Record is marked as adjusted (e.g. custom shift) — preserve adjusted check_in and status
+                        if not existing.get("check_in") and check_in:
+                            updated_fields["check_in"] = check_in
+                            updated_fields["status"] = status_val
+                        if existing.get("check_out") != check_out and check_out:
+                            updated_fields["check_out"] = check_out
+                            actual_check_in = existing.get("check_in") or check_in
+                            updated_fields["hours_worked"] = _calc_hours(actual_check_in, check_out)
+                            if "تسجيل انصراف تلقائي" in (existing.get("notes") or ""):
+                                updated_fields["notes"] = "مزامنة من جهاز البصمة"
+                    else:
+                        # Full update for standard biometric-sourced records
+                        if existing.get("check_in") != check_in:
+                            updated_fields["check_in"] = check_in
+                            updated_fields["status"] = status_val
+                        if existing.get("check_out") != check_out:
+                            updated_fields["check_out"] = check_out
+                            updated_fields["hours_worked"] = hours
+                            if "تسجيل انصراف تلقائي" in (existing.get("notes") or ""):
+                                updated_fields["notes"] = "مزامنة من جهاز البصمة"
                 else:
                     # For manual/gps/camera records, only fill missing data
                     if not existing.get("check_in") and check_in:

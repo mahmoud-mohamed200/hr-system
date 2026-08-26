@@ -139,7 +139,7 @@ function App() {
           <Route
             path="/assets"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'hr', 'ceo']}>
+              <ProtectedRoute>
                 <AppLayout>
                   <AssetsPage />
                 </AppLayout>

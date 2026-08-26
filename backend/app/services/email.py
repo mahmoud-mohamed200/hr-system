@@ -44,16 +44,20 @@ def send_2fa_email(to_email: str, otp_code: str):
     msg.attach(part1)
     msg.attach(part2)
 
-    try:
-        # Connect to Gmail SMTP server
-        server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT)
-        server.starttls() # Secure the connection
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, to_email, msg.as_string())
-        server.quit()
-        print(f"📩 [EMAIL SENT] OTP successfully sent to {to_email}")
-    except Exception as e:
-        print(f"❌ [EMAIL ERROR] Failed to send email to {to_email}: {e}")
+    def _send():
+        try:
+            # Connect to Gmail SMTP server
+            server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=5)
+            server.starttls() # Secure the connection
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, to_email, msg.as_string())
+            server.quit()
+            print(f"📩 [EMAIL SENT] OTP successfully sent to {to_email}")
+        except Exception as e:
+            print(f"❌ [EMAIL ERROR] Failed to send email to {to_email}: {e}")
+
+    import threading
+    threading.Thread(target=_send, daemon=True).start()
 
 
 def send_manager_request_notification(employee_name: str, request_type: str, date_of_request: str, review_link: str):
@@ -129,7 +133,7 @@ def send_manager_request_notification(employee_name: str, request_type: str, dat
                 Review & Respond
               </a>
             </div>
-            
+          
             <p style="font-size: 12px; color: #718096; text-align: center; margin-top: 30px; border-top: 1px solid #edf2f7; padding-top: 15px;">
               Please do not reply directly to this email. You can approve or reject this request inside the XQ Pharma HR Portal.
             </p>
@@ -145,13 +149,17 @@ def send_manager_request_notification(employee_name: str, request_type: str, dat
     msg.attach(part1)
     msg.attach(part2)
 
-    try:
-        server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT)
-        server.starttls()
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, recipients, msg.as_string())
-        server.quit()
-        print(f"📩 [EMAIL ALERT SENT] Request alert successfully sent to: {', '.join(recipients)}")
-    except Exception as e:
-        print(f"❌ [EMAIL ALERT ERROR] Failed to send request alert to {', '.join(recipients)}: {e}")
+    def _send():
+        try:
+            server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=5)
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, recipients, msg.as_string())
+            server.quit()
+            print(f"📩 [EMAIL ALERT SENT] Request alert successfully sent to: {', '.join(recipients)}")
+        except Exception as e:
+            print(f"❌ [EMAIL ALERT ERROR] Failed to send request alert to {', '.join(recipients)}: {e}")
+
+    import threading
+    threading.Thread(target=_send, daemon=True).start()
 

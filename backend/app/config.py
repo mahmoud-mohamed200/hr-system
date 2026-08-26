@@ -51,10 +51,10 @@ class Settings:
     # Email / SMTP (Gmail by default)
     SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "mahmoudb612@gmail.com")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    MANAGER_NOTIF_EMAILS: str = os.getenv("MANAGER_NOTIF_EMAILS", "mahmoudb612@gmail.com,admin@xqpharma.com,hr@xqpharma.com")
+    MANAGER_NOTIF_EMAILS: str = os.getenv("MANAGER_NOTIF_EMAILS", "mahmoudb612@gmail.com")
 
 
     def __init__(self):
@@ -72,5 +72,30 @@ class Settings:
         os.makedirs(self.UPLOAD_DIR, exist_ok=True)
         os.makedirs(self.FACES_DIR, exist_ok=True)
 
+    def sync_from_db(self):
+        """Load latest dynamic settings from MongoDB if available."""
+        try:
+            from app.database import settings_col
+            doc = settings_col().find_one()
+            if doc:
+                if "company_name" in doc and doc["company_name"]:
+                    self.COMPANY_NAME = doc["company_name"]
+                if "work_start" in doc and doc["work_start"]:
+                    self.WORK_START = doc["work_start"]
+                if "work_end" in doc and doc["work_end"]:
+                    self.WORK_END = doc["work_end"]
+                if "late_threshold_minutes" in doc and doc["late_threshold_minutes"] is not None:
+                    self.LATE_THRESHOLD_MINUTES = int(doc["late_threshold_minutes"])
+                if "weekend_days" in doc and doc["weekend_days"]:
+                    self.WEEKEND_DAYS = [d.lower() for d in doc["weekend_days"]]
+                if "biometric_device_ip" in doc and doc["biometric_device_ip"]:
+                    self.BIOMETRIC_DEVICE_IP = doc["biometric_device_ip"]
+                if "biometric_device_port" in doc and doc["biometric_device_port"]:
+                    self.BIOMETRIC_DEVICE_PORT = int(doc["biometric_device_port"])
+        except Exception:
+            pass
+
 
 settings = Settings()
+
+

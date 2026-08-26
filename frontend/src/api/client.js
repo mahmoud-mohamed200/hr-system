@@ -24,16 +24,23 @@ client.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle global errors (like token expiration)
+// Response interceptor to handle global errors and format Pydantic validation errors
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      // If we are not on the login page already, redirect to login
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+    if (error.response) {
+      if (error.response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+      // If detail is an array (Pydantic validation 422 error), flatten to human-readable string
+      if (Array.isArray(error.response.data?.detail)) {
+        error.response.data.detail = error.response.data.detail
+          .map((item) => item.msg || JSON.stringify(item))
+          .join(', ');
       }
     }
     return Promise.reject(error);

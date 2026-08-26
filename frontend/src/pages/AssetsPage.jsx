@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import client from '../api/client';
-import { Package, Plus, Check, X, UserMinus, UserPlus, Laptop, Car, Smartphone, Inbox } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Package, Plus, X, UserMinus, UserPlus, Laptop, Car, Smartphone, Inbox, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const AssetsPage = () => {
+  const { user } = useAuth();
+  const isAdminOrHr = ['admin', 'hr', 'ceo'].includes(user?.role);
+
   const [assets, setAssets] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   // Modals state
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -28,12 +33,18 @@ const AssetsPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [assetsRes, employeesRes] = await Promise.all([
-        client.get('/assets'),
-        client.get('/employees?per_page=100')
-      ]);
-      setAssets(assetsRes.data);
-      setEmployees(employeesRes.data.employees);
+      if (isAdminOrHr) {
+        const [assetsRes, employeesRes] = await Promise.all([
+          client.get('/assets'),
+          client.get('/employees?per_page=100')
+        ]);
+        setAssets(assetsRes.data);
+        setEmployees(employeesRes.data.employees || []);
+      } else {
+        const assetsRes = await client.get('/assets');
+        setAssets(assetsRes.data);
+        setEmployees([]);
+      }
     } catch (err) {
       console.error('Error loading assets data:', err);
       toast.error('حدث خطأ أثناء تحميل البيانات');
@@ -44,15 +55,12 @@ const AssetsPage = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
-    if (!createForm.employee_id) {
-      toast.error('يجب اختيار الموظف الذي سيستلم العهدة');
-      return;
-    }
     try {
+      setSubmitting(true);
       await client.post('/assets', createForm);
       toast.success('تمت إضافة الأصل بنجاح');
       setCreateModalOpen(false);
@@ -60,6 +68,8 @@ const AssetsPage = () => {
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'فشلت إضافة الأصل');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -67,6 +77,7 @@ const AssetsPage = () => {
     e.preventDefault();
     if (!assignForm.employee_id) return;
     try {
+      setSubmitting(true);
       await client.post(`/assets/${selectedAssetId}/assign`, assignForm);
       toast.success('تم تسليم العهدة بنجاح');
       setAssignModalOpen(false);
@@ -74,6 +85,8 @@ const AssetsPage = () => {
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'فشل تسليم العهدة');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -104,7 +117,7 @@ const AssetsPage = () => {
   const translateStatus = (status) => {
     const map = {
       available: 'متوفر بالمخزن',
-      assigned: 'عهدة موظف',
+      assigned: 'عهدة مسلمة لك',
       maintenance: 'تحت الصيانة'
     };
     return map[status] || status;
@@ -136,26 +149,28 @@ const AssetsPage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', direction: 'rtl' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Header title="إدارة العُهد والأصول الرقمية" />
-        <button 
-          onClick={() => setCreateModalOpen(true)}
-          style={{
-            background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-            color: '#ffffff',
-            border: 'none',
-            padding: '0.6rem 1.2rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontWeight: '700',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
-          }}
-        >
-          <Plus size={16} />
-          <span>إضافة أصل جديد</span>
-        </button>
+        <Header title={isAdminOrHr ? "إدارة العُهد والأصول الرقمية" : "عُهدي وأصولي المسلمة"} />
+        {isAdminOrHr && (
+          <button 
+            onClick={() => setCreateModalOpen(true)}
+            style={{
+              background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+              color: '#ffffff',
+              border: 'none',
+              padding: '0.6rem 1.2rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontWeight: '700',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+            }}
+          >
+            <Plus size={16} />
+            <span>إضافة أصل جديد</span>
+          </button>
+        )}
       </div>
 
       <div className="card" style={{ padding: 0 }}>
@@ -163,20 +178,24 @@ const AssetsPage = () => {
           <div style={{ padding: '3rem', textAlign: 'center' }}>جاري تحميل البيانات...</div>
         ) : assets.length === 0 ? (
           <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-dim)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-            <Inbox size={48} opacity={0.3} />
-            <span>لا توجد أصول أو عُهد مسجلة في المخزن حالياً.</span>
+            {isAdminOrHr ? <Inbox size={48} opacity={0.3} /> : <ShieldCheck size={48} color="var(--accent)" opacity={0.5} />}
+            <span>
+              {isAdminOrHr 
+                ? 'لا توجد أصول أو عُهد مسجلة في المخزن حالياً.' 
+                : 'ليس لديك أي عُهد أو أصول رقمية مسجلة في ذمتك حالياً.'}
+            </span>
           </div>
         ) : (
           <table className="data-table" style={{ marginTop: 0 }}>
             <thead>
               <tr style={{ background: 'rgba(0, 39, 73, 0.01)' }}>
                 <th style={{ paddingRight: '1.5rem', textAlign: 'right' }}>نوع الأصل</th>
-                <th style={{ textAlign: 'right' }}>اسم الأصل</th>
+                <th style={{ textAlign: 'right' }}>اسم الأصل ومواصفاته</th>
                 <th style={{ textAlign: 'right' }}>الرقم التسلسلي (Serial)</th>
                 <th style={{ textAlign: 'right' }}>حالة العهدة</th>
-                <th style={{ textAlign: 'right' }}>العهدة مع الموظف</th>
-                <th style={{ textAlign: 'right' }}>تاريخ التسليم</th>
-                <th style={{ paddingLeft: '1.5rem', textAlign: 'left' }}>الإجراءات</th>
+                {isAdminOrHr && <th style={{ textAlign: 'right' }}>العهدة مع الموظف</th>}
+                <th style={{ textAlign: 'right' }}>تاريخ الاستلام</th>
+                {isAdminOrHr && <th style={{ paddingLeft: '1.5rem', textAlign: 'left' }}>الإجراءات</th>}
               </tr>
             </thead>
             <tbody>
@@ -202,65 +221,67 @@ const AssetsPage = () => {
                       {translateStatus(asset.status)}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{asset.employee_name || '-'}</td>
+                  {isAdminOrHr && <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{asset.employee_name || '-'}</td>}
                   <td style={{ textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-dim)' }}>{asset.assigned_date || '-'}</td>
-                  <td style={{ paddingLeft: '1.5rem', textAlign: 'left' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      {asset.status === 'available' ? (
-                        <button 
-                          onClick={() => { setSelectedAssetId(asset.id); setAssignModalOpen(true); }}
-                          style={{
-                            background: 'rgba(34, 197, 94, 0.1)',
-                            border: '1px solid rgba(34, 197, 94, 0.2)',
-                            color: 'var(--accent)',
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.3rem',
-                            fontSize: '0.8rem'
-                          }}
-                        >
-                          <UserPlus size={12} />
-                          <span>تسليم عهدة</span>
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleReturnAsset(asset.id)}
-                          style={{
-                            background: 'rgba(96, 165, 250, 0.1)',
-                            border: '1px solid rgba(96, 165, 250, 0.2)',
-                            color: '#60a5fa',
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.3rem',
-                            fontSize: '0.8rem'
-                          }}
-                        >
-                          <UserMinus size={12} />
-                          <span>إرجاع للمخزن</span>
-                        </button>
-                      )}
+                  {isAdminOrHr && (
+                    <td style={{ paddingLeft: '1.5rem', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        {asset.status === 'available' ? (
+                          <button 
+                            onClick={() => { setSelectedAssetId(asset.id); setAssignModalOpen(true); }}
+                            style={{
+                              background: 'rgba(34, 197, 94, 0.1)',
+                              border: '1px solid rgba(34, 197, 94, 0.2)',
+                              color: 'var(--accent)',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            <UserPlus size={12} />
+                            <span>تسليم عهدة</span>
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => handleReturnAsset(asset.id)}
+                            style={{
+                              background: 'rgba(96, 165, 250, 0.1)',
+                              border: '1px solid rgba(96, 165, 250, 0.2)',
+                              color: '#60a5fa',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            <UserMinus size={12} />
+                            <span>إرجاع للمخزن</span>
+                          </button>
+                        )}
 
-                      <button 
-                        onClick={() => handleDeleteAsset(asset.id)}
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
-                          color: '#f87171',
-                          padding: '0.35rem',
-                          borderRadius: '6px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  </td>
+                        <button 
+                          onClick={() => handleDeleteAsset(asset.id)}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            color: '#f87171',
+                            padding: '0.35rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -269,7 +290,7 @@ const AssetsPage = () => {
       </div>
 
       {/* CREATE ASSET MODAL */}
-      {createModalOpen && (
+      {isAdminOrHr && createModalOpen && (
         <div className="modal-backdrop">
           <div className="card" style={{ width: '400px', padding: '2rem', position: 'relative', textAlign: 'right' }}>
             <button onClick={() => setCreateModalOpen(false)} style={{ position: 'absolute', left: '1.5rem', top: '1.5rem', background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}>
@@ -314,15 +335,14 @@ const AssetsPage = () => {
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                <label className="input-label">تسليم العهدة لموظف *</label>
+                <label className="input-label">تسليم العهدة لموظف (اختياري)</label>
                 <select 
-                  required
                   value={createForm.employee_id} 
                   onChange={(e) => setCreateForm(p => ({ ...p, employee_id: e.target.value }))}
                   className="modal-input"
                   style={{ direction: 'rtl' }}
                 >
-                  <option value="">اختر الموظف المستلم...</option>
+                  <option value="">ترك الأصل في المخزن (غير مخصص لموظف حالياً)...</option>
                   {employees.map(emp => (
                     <option key={emp.id} value={emp.employee_id} style={{ background: 'var(--bg-card)' }}>
                       {emp.name} ({emp.employee_id})
@@ -330,8 +350,21 @@ const AssetsPage = () => {
                   ))}
                 </select>
               </div>
-              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
-                حفظ وإضافة الأصل
+              <button 
+                type="submit" 
+                disabled={submitting} 
+                style={{ 
+                  background: submitting ? '#64748b' : 'linear-gradient(135deg, var(--primary), var(--primary-dark))', 
+                  color: '#ffffff', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  padding: '0.8rem', 
+                  fontWeight: '700', 
+                  cursor: submitting ? 'not-allowed' : 'pointer', 
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' 
+                }}
+              >
+                {submitting ? 'جاري الحفظ...' : 'حفظ وإضافة الأصل'}
               </button>
             </form>
           </div>
@@ -339,7 +372,7 @@ const AssetsPage = () => {
       )}
 
       {/* ASSIGN ASSET MODAL */}
-      {assignModalOpen && (
+      {isAdminOrHr && assignModalOpen && (
         <div className="modal-backdrop">
           <div className="card" style={{ width: '400px', padding: '2rem', position: 'relative', textAlign: 'right' }}>
             <button onClick={() => setAssignModalOpen(false)} style={{ position: 'absolute', left: '1.5rem', top: '1.5rem', background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer' }}>
@@ -364,8 +397,21 @@ const AssetsPage = () => {
                   ))}
                 </select>
               </div>
-              <button type="submit" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))', color: '#ffffff', border: 'none', borderRadius: '8px', padding: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
-                تأكيد وتسليم العهدة
+              <button 
+                type="submit" 
+                disabled={submitting}
+                style={{ 
+                  background: submitting ? '#64748b' : 'linear-gradient(135deg, var(--primary), var(--primary-dark))', 
+                  color: '#ffffff', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  padding: '0.8rem', 
+                  fontWeight: '700', 
+                  cursor: submitting ? 'not-allowed' : 'pointer', 
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' 
+                }}
+              >
+                {submitting ? 'جاري التسليم...' : 'تأكيد وتسليم العهدة'}
               </button>
             </form>
           </div>

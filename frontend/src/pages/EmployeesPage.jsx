@@ -156,7 +156,9 @@ const EmployeesPage = () => {
     // Fetch assigned assets for exit clearance visibility
     try {
       const assetsRes = await client.get('/assets');
-      const filtered = assetsRes.data.filter(a => a.employee_id === emp.employee_id);
+      const filtered = assetsRes.data.filter(a => 
+        a.employee_id && (a.employee_id === emp.employee_id || a.employee_id === emp.id || a.employee_id === emp._id)
+      );
       setAssignedAssets(filtered);
     } catch (err) {
       console.error(err);

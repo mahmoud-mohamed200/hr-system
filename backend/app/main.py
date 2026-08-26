@@ -61,10 +61,14 @@ app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads"
 
 @app.on_event("startup")
 def startup_db_client():
-    # Defer synchronous DB connection and index creation to the first request 
-    # to prevent blocking uvicorn from opening the port, which causes healthcheck timeouts on cloud deployments.
-    # get_db()
-    logger.info("🚀 App starting up (DB connection deferred to first request).")
+    logger.info("🚀 App starting up.")
+    try:
+        settings.sync_from_db()
+        from app.routes.settings import recalculate_attendance_lateness
+        recalculate_attendance_lateness()
+        logger.info(f"⚙️ Loaded system settings: work_start={settings.WORK_START}, late_threshold={settings.LATE_THRESHOLD_MINUTES} mins")
+    except Exception as e:
+        logger.warning(f"Initial settings sync deferred: {e}")
     
     # Start background scheduler
     if not scheduler.running:
@@ -73,6 +77,7 @@ def startup_db_client():
         scheduler.add_job(sync_biometric_device, 'interval', hours=2)
         scheduler.start()
         logger.info("⏱️ Background scheduler started. Auto-absent job scheduled at 23:50 daily. Biometric sync scheduled every 2 hours.")
+
 
 
 @app.on_event("shutdown")

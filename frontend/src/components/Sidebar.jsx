@@ -33,7 +33,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     { path: '/leaves', label: 'الإجازات', icon: Calendar, roles: ['admin', 'hr', 'employee'] },
     { path: '/loans', label: 'السلف والقروض', icon: Coins, roles: ['admin', 'hr', 'employee'] },
     { path: '/payroll', label: 'الرواتب', icon: Wallet, roles: ['admin', 'hr', 'employee'] },
-    { path: '/assets', label: 'العهد والأصول', icon: Package, roles: ['admin', 'hr'] },
+    { path: '/assets', label: 'العهد والأصول', icon: Package, roles: ['admin', 'hr', 'employee'] },
     { path: '/departments', label: 'الأقسام الإدارية', icon: Building2, roles: ['admin', 'hr'] },
     { path: '/reports', label: 'التقارير', icon: BarChart3, roles: ['admin', 'hr'] },
     { path: '/settings', label: 'الإعدادات', icon: Settings, roles: ['admin', 'hr', 'employee'] },

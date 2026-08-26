@@ -64,7 +64,7 @@ def create_asset(
         "name": data.name,
         "serial_number": data.serial_number,
         "type": data.type,
-        "employee_id": data.employee_id,
+        "employee_id": data.employee_id if data.employee_id else None,
         "employee_name": emp_name,
         "status": status_val,
         "assigned_date": assigned_date

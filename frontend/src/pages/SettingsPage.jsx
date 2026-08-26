@@ -44,6 +44,8 @@ const SettingsPage = () => {
   const [systemLoading, setSystemLoading] = useState(false);
   const [systemSaving, setSystemSaving] = useState(false);
   const [systemSuccess, setSystemSuccess] = useState(false);
+  const [systemSuccessMsg, setSystemSuccessMsg] = useState('');
+
 
   useEffect(() => {
     if (user) {
@@ -184,15 +186,22 @@ const SettingsPage = () => {
     setSystemSaving(true);
     setSystemSuccess(false);
     try {
-      await client.put('/settings', systemData);
+      const res = await client.put('/settings', systemData);
       setSystemSuccess(true);
-      setTimeout(() => setSystemSuccess(false), 3000);
+      const recCount = res.data?.recalculated_records;
+      setSystemSuccessMsg(
+        recCount > 0
+          ? `تم حفظ الإعدادات وتحديث ${recCount} سجلاً من سجلات الحضور لتطبيق فترة السماح (${systemData.late_threshold_minutes} دقيقة) بنجاح على السيستم بالكامل.`
+          : `تم حفظ وتطبيق فترة السماح (${systemData.late_threshold_minutes} دقيقة) بنجاح على السيستم بالكامل.`
+      );
+      setTimeout(() => setSystemSuccess(false), 4500);
     } catch (err) {
       alert(err.response?.data?.detail || 'فشل حفظ إعدادات النظام');
     } finally {
       setSystemSaving(false);
     }
   };
+
 
   const daysOfWeek = [
     { key: 'monday', label: 'الاثنين' },
@@ -399,9 +408,10 @@ const SettingsPage = () => {
           {systemSuccess && (
             <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: 'var(--accent)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
               <CheckCircle size={16} />
-              <span>تم حفظ وتطبيق الإعدادات بنجاح.</span>
+              <span>{systemSuccessMsg || 'تم حفظ وتطبيق الإعدادات بنجاح على السيستم بالكامل.'}</span>
             </div>
           )}
+
 
           {systemLoading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-dim)' }}>جاري تحميل إعدادات النظام...</div>
