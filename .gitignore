@@ -22,9 +22,8 @@ faces/
 uploads/
 .env
 backend/.env
-.idea/
 .vscode/
-backend/static/
 HR.app/
+# backend/static/ is tracked for direct production hosting
 electron/
 
