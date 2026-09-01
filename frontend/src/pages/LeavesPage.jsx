@@ -60,8 +60,12 @@ const LeavesPage = () => {
     e.preventDefault();
     try {
       const payload = { ...formData };
+      // Ensure duration_hours is null unless it's a valid number for permission/emergency_sick
       if (payload.leave_type !== 'permission' && payload.leave_type !== 'emergency_sick') {
         payload.duration_hours = null;
+      } else {
+        // Convert empty string to null to prevent Pydantic validation error
+        payload.duration_hours = payload.duration_hours ? parseFloat(payload.duration_hours) : null;
       }
       
       if (payload.leave_type === 'sick') {
