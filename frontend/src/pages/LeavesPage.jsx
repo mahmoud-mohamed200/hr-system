@@ -60,7 +60,7 @@ const LeavesPage = () => {
     e.preventDefault();
     try {
       const payload = { ...formData };
-      if (payload.leave_type !== 'permission') {
+      if (payload.leave_type !== 'permission' && payload.leave_type !== 'emergency_sick') {
         payload.duration_hours = null;
       }
       
@@ -69,6 +69,14 @@ const LeavesPage = () => {
           alert('يجب رفع صورة الشهادة المرضية أولاً.');
           return;
         }
+        const uploadData = new FormData();
+        uploadData.append('file', certificateFile);
+        const uploadRes = await client.post('/leaves/upload_certificate', uploadData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        payload.attachment_url = uploadRes.data.url;
+      } else if (payload.leave_type === 'emergency_sick' && certificateFile) {
+        // Optional certificate upload for emergency sick leave
         const uploadData = new FormData();
         uploadData.append('file', certificateFile);
         const uploadRes = await client.post('/leaves/upload_certificate', uploadData, {
@@ -118,9 +126,10 @@ const LeavesPage = () => {
 
   const translateType = (type) => {
     const map = {
-      casual: 'عارضة',
-      sick: 'مرضية',
-      annual: 'سنوية',
+      casual: 'إجازة عارضة',
+      sick: 'إجازة مرضية',
+      annual: 'إجازة سنوية',
+      emergency_sick: 'إذن انصراف طارئ (وعكة صحية)',
       permission: 'إذن غياب قصير',
       mission: 'مأمورية عمل خارجية'
     };
@@ -302,15 +311,36 @@ const LeavesPage = () => {
                 <select 
                   name="leave_type" 
                   value={formData.leave_type} 
-                  onChange={handleInputChange} 
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    if (e.target.value === 'emergency_sick') {
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      setFormData(prev => ({ ...prev, leave_type: 'emergency_sick', start_date: todayStr, end_date: todayStr }));
+                    }
+                  }} 
                   className="modal-input"
                   style={{ direction: 'rtl' }}
                 >
                   <option value="casual" style={{ background: 'var(--bg-card)' }}>إجازة عارضة</option>
                   <option value="annual" style={{ background: 'var(--bg-card)' }}>إجازة سنوية</option>
-                  <option value="sick" style={{ background: 'var(--bg-card)' }}>إجازة مرضية</option>
+                  <option value="sick" style={{ background: 'var(--bg-card)' }}>إجازة مرضية (يوم كامل فأكثر)</option>
+                  <option value="emergency_sick" style={{ background: 'var(--bg-card)' }}>إذن انصراف طارئ (وعكة صحية أثناء العمل)</option>
                 </select>
               </div>
+
+              {formData.leave_type === 'emergency_sick' && (
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: '8px',
+                  fontSize: '0.82rem',
+                  color: 'var(--text-main)',
+                  lineHeight: '1.4'
+                }}>
+                  🩺 <strong>إذن انصراف طارئ:</strong> يُستخدم عند الشعور بالإعياء أو التعب أثناء الدوام لطلب المغادرة المبكرة بعذر طبي معتمد دون احتساب غياب.
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -342,7 +372,7 @@ const LeavesPage = () => {
                 <textarea 
                   name="reason" 
                   required 
-                  placeholder="يرجى كتابة سبب تقديم الطلب..."
+                  placeholder={formData.leave_type === 'emergency_sick' ? "يرجى وصف الحالة الصحية أو سبب الاستئذان الطارئ..." : "يرجى كتابة سبب تقديم الطلب..."}
                   value={formData.reason} 
                   onChange={handleInputChange} 
                   className="modal-input" 
@@ -356,6 +386,18 @@ const LeavesPage = () => {
                   <input 
                     type="file" 
                     required
+                    accept="image/*,.pdf"
+                    onChange={(e) => setCertificateFile(e.target.files[0])} 
+                    className="modal-input" 
+                  />
+                </div>
+              )}
+
+              {formData.leave_type === 'emergency_sick' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label className="input-label">صورة الروشتة أو التقرير الطبي (اختياري)</label>
+                  <input 
+                    type="file" 
                     accept="image/*,.pdf"
                     onChange={(e) => setCertificateFile(e.target.files[0])} 
                     className="modal-input" 

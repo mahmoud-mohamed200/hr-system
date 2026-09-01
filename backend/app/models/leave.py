@@ -12,6 +12,7 @@ class LeaveType(str, Enum):
     ANNUAL = "annual"
     PERMISSION = "permission"  # Short hourly leave
     MISSION = "mission"  # Business mission
+    EMERGENCY_SICK = "emergency_sick"  # إذن انصراف طارئ لظرف صحي / وعكة أثناء العمل
 
 
 class LeaveStatus(str, Enum):

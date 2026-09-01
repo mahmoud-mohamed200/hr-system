@@ -49,10 +49,10 @@ def request_leave(
         raise HTTPException(status_code=404, detail="Employee profile not found")
 
     # Enforce allowed leave types
-    allowed_types = ["casual", "sick", "annual"]
+    allowed_types = ["casual", "sick", "annual", "emergency_sick", "permission", "mission"]
     leave_type_val = data.leave_type.value if hasattr(data.leave_type, "value") else data.leave_type
     if leave_type_val not in allowed_types:
-        raise HTTPException(status_code=400, detail="نوع الطلب غير مدعوم. الأنواع المسموح بها هي فقط: عارضة، سنوية، ومرضية.")
+        raise HTTPException(status_code=400, detail="نوع الطلب غير مدعوم. الأنواع المسموح بها: عارضة، سنوية، مرضية، إذن انصراف طارئ (وعكة صحية).")
 
     # Enforce hourly permission limit per month (Egyptian custom)
     if data.leave_type == "permission":
@@ -191,7 +191,8 @@ def _adjust_attendance_for_leave(leave: dict):
         "mission": "on_time", # Or mission
         "annual": "leave",
         "sick": "leave",
-        "casual": "leave"
+        "casual": "leave",
+        "emergency_sick": "excused"
     }
     
     target_status = status_map.get(leave_type, "on_time")
@@ -222,6 +223,30 @@ def _adjust_attendance_for_leave(leave: dict):
                     "status": "on_time", # or 'leave'
                     "hours_worked": leave.get("duration_hours") or 0.0,
                     "notes": f"إذن غياب معتمد: {leave['reason']}",
+                    "source": "manual"
+                })
+        elif leave_type == "emergency_sick":
+            note_text = f"انصراف طارئ (وعكة صحية أثناء العمل): {leave['reason']}"
+            if existing:
+                attendance_col().update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": {
+                        "status": "excused",
+                        "notes": f"{existing.get('notes') or ''} ({note_text})".strip()
+                    }}
+                )
+            else:
+                attendance_col().insert_one({
+                    "employee_id": emp_id,
+                    "employee_name": leave["employee_name"],
+                    "department": leave.get("department", ""),
+                    "job_title": "",
+                    "date": date_str,
+                    "check_in": None,
+                    "check_out": None,
+                    "status": "excused",
+                    "hours_worked": leave.get("duration_hours") or 0.0,
+                    "notes": note_text,
                     "source": "manual"
                 })
         else:

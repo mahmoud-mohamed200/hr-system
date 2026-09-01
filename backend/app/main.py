@@ -108,7 +108,6 @@ app.include_router(loans.router)
 app.include_router(assets.router)
 app.include_router(payroll.router)
 app.include_router(notifications.router)
-
 # Serve frontend static assets explicitly if they exist
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
 ASSETS_DIR = os.path.join(STATIC_DIR, "assets")
